@@ -62,9 +62,75 @@ DIRETRIZES ESTRITAS:
 2. Saída direta, cirúrgica e técnica (apenas código ou JSON estruturado).
 3. Máxima densidade de informação por token.`;
 
-// Cache LRU em Memória (RAM) com TTL de 10 minutos
+// Cache LRU em Memória (RAM) com TTL e Limpeza Ativa Anti-Garbage
 const memoryCache = new Map();
 const CACHE_TTL_MS = 10 * 60 * 1000;
+const MAX_CACHE_ENTRIES = 80;
+
+function sweepExpiredCache() {
+  const now = Date.now();
+  for (const [key, item] of memoryCache.entries()) {
+    if (now - item.timestamp > CACHE_TTL_MS) {
+      memoryCache.delete(key);
+    }
+  }
+}
+const cacheSweepInterval = setInterval(sweepExpiredCache, 60000);
+if (cacheSweepInterval.unref) cacheSweepInterval.unref();
+
+function getMemoryReport() {
+  const mem = process.memoryUsage();
+  return {
+    rssMb: (mem.rss / 1024 / 1024).toFixed(2),
+    heapUsedMb: (mem.heapUsed / 1024 / 1024).toFixed(2),
+    heapTotalMb: (mem.heapTotal / 1024 / 1024).toFixed(2),
+    cacheEntries: memoryCache.size
+  };
+}
+
+function clearOrchestratorMemory() {
+  memoryCache.clear();
+  if (global.gc) {
+    try { global.gc(); } catch (_) {}
+  }
+}
+
+// ============================================================================
+// EWMA LATENCY & HEALTH TRACKER (ROTEAMENTO DINÂMICO EM SUB-SEGUNDO)
+// ============================================================================
+const modelHealth = new Map();
+
+function recordModelMetric(model, latency, isSuccess = true) {
+  let stats = modelHealth.get(model);
+  if (!stats) {
+    stats = { latencyEwma: latency, failures: 0, lastCheck: Date.now(), cooldownUntil: 0 };
+    modelHealth.set(model, stats);
+  }
+  if (isSuccess) {
+    stats.failures = Math.max(0, stats.failures - 1);
+    stats.latencyEwma = Math.round(0.6 * latency + 0.4 * stats.latencyEwma);
+    stats.lastCheck = Date.now();
+  } else {
+    stats.failures++;
+    if (stats.failures >= 2) {
+      stats.cooldownUntil = Date.now() + 30000;
+      stats.latencyEwma = 99999;
+    }
+  }
+}
+
+function getModelHealthReport() {
+  const report = {};
+  for (const [m, s] of modelHealth.entries()) {
+    report[m] = {
+      ewmaMs: s.latencyEwma,
+      failures: s.failures,
+      inCooldown: s.cooldownUntil > Date.now(),
+      lastSeen: new Date(s.lastCheck).toISOString()
+    };
+  }
+  return report;
+}
 
 function hashPrompt(model, prompt, systemPrompt, a2a) {
   return crypto.createHash('sha256').update(`${model}:${prompt}:${systemPrompt}:${a2a}`).digest('hex');
@@ -81,7 +147,7 @@ function getFromCache(key) {
 }
 
 function setInCache(key, value) {
-  if (memoryCache.size > 300) {
+  if (memoryCache.size >= MAX_CACHE_ENTRIES) {
     const oldestKey = memoryCache.keys().next().value;
     memoryCache.delete(oldestKey);
   }
@@ -160,7 +226,10 @@ function streamQueryOmniRouter(modelInput, prompt, onToken, systemPrompt = '', o
       if (res.statusCode < 200 || res.statusCode >= 300) {
         let errData = '';
         res.on('data', c => errData += c);
-        res.on('end', () => reject(new Error(`[HTTP ${res.statusCode}]: ${errData}`)));
+        res.on('end', () => {
+          recordModelMetric(modelId, 99999, false);
+          reject(new Error(`[HTTP ${res.statusCode}]: ${errData}`));
+        });
         return;
       }
 
@@ -168,15 +237,15 @@ function streamQueryOmniRouter(modelInput, prompt, onToken, systemPrompt = '', o
         if (!ttft) ttft = Date.now() - start;
         buffer += chunk.toString('utf8');
 
-        const lines = buffer.split('\n');
-        buffer = lines.pop();
+        let nlIdx;
+        while ((nlIdx = buffer.indexOf('\n')) !== -1) {
+          const line = buffer.slice(0, nlIdx).trim();
+          buffer = buffer.slice(nlIdx + 1);
 
-        for (const line of lines) {
-          const trimmed = line.trim();
-          if (!trimmed || trimmed === 'data: [DONE]') continue;
-          if (trimmed.startsWith('data: ')) {
+          if (!line || line === 'data: [DONE]') continue;
+          if (line.startsWith('data: ')) {
             try {
-              const parsed = JSON.parse(trimmed.slice(6));
+              const parsed = JSON.parse(line.slice(6));
               const token = parsed?.choices?.[0]?.delta?.content || '';
               if (token) {
                 fullText += token;
@@ -189,6 +258,7 @@ function streamQueryOmniRouter(modelInput, prompt, onToken, systemPrompt = '', o
 
       res.on('end', () => {
         const totalDuration = Date.now() - start;
+        recordModelMetric(modelId, totalDuration, true);
         if (fullText) setInCache(cacheKey, fullText);
         resolve({
           ok: true,
@@ -203,9 +273,13 @@ function streamQueryOmniRouter(modelInput, prompt, onToken, systemPrompt = '', o
     req.setNoDelay(true);
     req.on('timeout', () => {
       req.destroy();
+      recordModelMetric(modelId, 99999, false);
       reject(new Error('Timeout de streaming excedido.'));
     });
-    req.on('error', (e) => reject(e));
+    req.on('error', (e) => {
+      recordModelMetric(modelId, 99999, false);
+      reject(e);
+    });
     req.write(postData);
     req.end();
   });
@@ -419,7 +493,241 @@ Analise as respostas, elimine discrepâncias e alucinações, e formule a respos
 }
 
 // ============================================================================
-// 2. OTIMIZAÇÕES SEQUENCIAIS: PIPELINE MULTI-ESTÁGIO CONFIGURÁVEL
+// 2. ESTEIRA CONTÍNUA MULTI-CHAVE & PIPELINES ASSÍNCRONOS (OVERLAPPING STREAM)
+// ============================================================================
+
+/**
+ * Chunker Semântico Adaptativo:
+ * Extrai unidades coerentes (blocos de código, itens numerados, sentenças) sem quebrar código.
+ */
+function extractNextSemanticUnit(buffer) {
+  if (!buffer || buffer.length < 5) return null;
+
+  // 1. Bloco de código delimitado ``` ... ```
+  if (buffer.trimStart().startsWith('```')) {
+    const startIdx = buffer.indexOf('```');
+    const endIdx = buffer.indexOf('```', startIdx + 3);
+    if (endIdx !== -1) {
+      const afterBlock = buffer.indexOf('\n', endIdx + 3);
+      const cutEnd = afterBlock !== -1 ? afterBlock + 1 : endIdx + 3;
+      return { unit: buffer.slice(0, cutEnd).trim(), rest: buffer.slice(cutEnd) };
+    }
+    return null;
+  }
+
+  // 2. Lista numerada, bullet ou cabeçalho terminando com \n
+  const lineMatch = buffer.match(/^([0-9]+\.|\-|\*|\#+)\s+[^\n]+\n/);
+  if (lineMatch) {
+    return { unit: lineMatch[0].trim(), rest: buffer.slice(lineMatch[0].length) };
+  }
+
+  // 3. Sentença completa com pontuação e \n
+  const sentenceMatch = buffer.match(/^[^\n]+[.?!]\s*\n/);
+  if (sentenceMatch) {
+    return { unit: sentenceMatch[0].trim(), rest: buffer.slice(sentenceMatch[0].length) };
+  }
+
+  // 4. Quebra de linha simples
+  const nlIdx = buffer.indexOf('\n');
+  if (nlIdx !== -1) {
+    const line = buffer.slice(0, nlIdx).trim();
+    if (line) {
+      return { unit: line, rest: buffer.slice(nlIdx + 1) };
+    } else {
+      return extractNextSemanticUnit(buffer.slice(nlIdx + 1));
+    }
+  }
+
+  // 5. Overflow de segurança (> 350 chars)
+  if (buffer.length > 350) {
+    const spaceIdx = buffer.lastIndexOf(' ', 350);
+    const cut = spaceIdx > 150 ? spaceIdx : 350;
+    return { unit: buffer.slice(0, cut).trim(), rest: buffer.slice(cut) };
+  }
+
+  return null;
+}
+
+/**
+ * ⚡ Esteira Contínua Assíncrona Multi-Chave com Chunking Semântico e Janela Deslizante
+ * Concorrência real entre múltiplas contas/chaves do pool.
+ * Zero arquivos em disco: tudo em streaming puro de memória RAM com liberação imediata de buffers.
+ */
+async function runContinuousPipeline(options = {}) {
+  const {
+    taskPrompt,
+    producerModel = 'groq/openai/gpt-oss-120b',
+    consumerModel = 'ag/claude-sonnet-4-6',
+    systemPrompt = '',
+    consumerConcurrency = 2,
+    consumerPromptBuilder = (item, idx, ctx) => `Contexto anterior:\n${ctx || 'Nenhum'}\n\nItem a analisar:\n${item}`,
+    onProducerToken,
+    onProducerUnit,
+    onConsumerStart,
+    onConsumerToken,
+    onConsumerUnitComplete
+  } = options;
+
+  const t0 = Date.now();
+  const queue = [];
+  const contextWindow = [];
+  let producerDone = false;
+  let activeWorkers = 0;
+  const completedResults = [];
+  let unitIndex = 0;
+
+  return new Promise((resolve, reject) => {
+    function checkAndResolve() {
+      if (producerDone && queue.length === 0 && activeWorkers === 0) {
+        resolve({
+          ok: true,
+          totalDuration: Date.now() - t0,
+          itemsProcessed: completedResults.length,
+          results: completedResults.sort((a, b) => a.index - b.index)
+        });
+      }
+    }
+
+    async function dispatchQueue() {
+      while (queue.length > 0 && activeWorkers < consumerConcurrency) {
+        activeWorkers++;
+        const unit = queue.shift();
+        (async () => {
+          const itemT0 = Date.now();
+          if (onConsumerStart) onConsumerStart(unit.index, unit.content);
+          try {
+            const recentCtx = contextWindow.slice(-2).map(c => `[Passo #${c.index}]: ${c.content}`).join('\n');
+            const workerPrompt = consumerPromptBuilder(unit.content, unit.index, recentCtx);
+            const res = await streamQueryOmniRouter(
+              consumerModel,
+              workerPrompt,
+              (tok) => { if (onConsumerToken) onConsumerToken(unit.index, tok); },
+              '',
+              { a2a: true, bypassCache: true }
+            );
+
+            const resultItem = {
+              index: unit.index,
+              source: unit.content,
+              processed: res.reply,
+              duration: Date.now() - itemT0
+            };
+            completedResults.push(resultItem);
+            contextWindow.push({ index: unit.index, content: unit.content.slice(0, 150) });
+            if (contextWindow.length > 4) contextWindow.shift();
+
+            if (onConsumerUnitComplete) onConsumerUnitComplete(resultItem);
+          } catch (err) {
+            console.error(`[Worker ${unit.index} Error]:`, err.message);
+            completedResults.push({
+              index: unit.index,
+              source: unit.content,
+              error: err.message,
+              duration: Date.now() - itemT0
+            });
+          } finally {
+            activeWorkers--;
+            unit.content = null;
+            dispatchQueue();
+            checkAndResolve();
+          }
+        })();
+      }
+    }
+
+    // Produtor em streaming com chunking semântico adaptativo
+    (async () => {
+      try {
+        let streamBuf = '';
+        await streamQueryOmniRouter(
+          producerModel,
+          taskPrompt,
+          (token) => {
+            if (onProducerToken) onProducerToken(token);
+            streamBuf += token;
+
+            let extracted;
+            while ((extracted = extractNextSemanticUnit(streamBuf)) !== null) {
+              streamBuf = extracted.rest;
+              if (extracted.unit) {
+                const u = { index: ++unitIndex, content: extracted.unit };
+                if (onProducerUnit) onProducerUnit(u.index, u.content);
+                queue.push(u);
+                dispatchQueue();
+              }
+            }
+          },
+          systemPrompt,
+          { a2a: true, bypassCache: true }
+        );
+
+        if (streamBuf.trim()) {
+          const u = { index: ++unitIndex, content: streamBuf.trim() };
+          if (onProducerUnit) onProducerUnit(u.index, u.content);
+          queue.push(u);
+          dispatchQueue();
+        }
+
+        producerDone = true;
+        dispatchQueue();
+        checkAndResolve();
+      } catch (err) {
+        reject(err);
+      }
+    })();
+  });
+}
+
+/**
+ * ⚡ Speculative Verification Pipeline (Draft-and-Verify)
+ * Combina a velocidade do Groq com a inteligência do Claude Sonnet 4.6.
+ */
+async function runSpeculativeVerification(taskPrompt, options = {}) {
+  const drafterModel = options.drafterModel || 'groq/openai/gpt-oss-120b';
+  const verifierModel = options.verifierModel || 'ag/claude-sonnet-4-6';
+  const t0 = Date.now();
+
+  const draftResult = await streamQueryOmniRouter(
+    drafterModel,
+    taskPrompt,
+    options.onDraftToken,
+    options.systemPrompt,
+    { a2a: true, bypassCache: true }
+  );
+  const draftDuration = Date.now() - t0;
+
+  const auditPrompt = `TAREFA DO USUÁRIO:
+${taskPrompt}
+
+RASCUNHO RÁPIDO GERADO:
+${draftResult.reply}
+
+INSTRUÇÃO DO VERIFICADOR (Claude Sonnet):
+Se o rascunho estiver 100% correto e robusto, aprove com refinamentos de precisão e tipagem.
+Se houver qualquer erro, alucinação ou falta técnica, corrija imediatamente gerando a versão definitiva lapidada.
+Sem comentários meta, forneça apenas a resposta final lapidada.`;
+
+  const verifiedResult = await streamQueryOmniRouter(
+    verifierModel,
+    auditPrompt,
+    options.onVerifyToken,
+    'Você é o Verificador Técnico de Elite e Auditor de Código.',
+    { a2a: true, bypassCache: true }
+  );
+
+  return {
+    ok: true,
+    drafterModel,
+    verifierModel,
+    draftDuration,
+    verificationDuration: Date.now() - t0 - draftDuration,
+    totalDuration: Date.now() - t0,
+    reply: verifiedResult.reply
+  };
+}
+
+// ============================================================================
+// 3. OTIMIZAÇÕES SEQUENCIAIS: PIPELINE MULTI-ESTÁGIO CONFIGURÁVEL
 // ============================================================================
 
 /**
@@ -606,6 +914,8 @@ if (require.main === module) {
   let prompt = '';
   let system = '';
   let isPipeline = false;
+  let isContinuous = false;
+  let isMemory = false;
   let isBench = false;
   let isRace = false;
   let isConsensus = false;
@@ -619,6 +929,10 @@ if (require.main === module) {
       isRace = true;
     } else if (args[i] === '--consensus' || args[i] === '-c') {
       isConsensus = true;
+    } else if (args[i] === '--continuous' || args[i] === '-cp') {
+      isContinuous = true;
+    } else if (args[i] === '--memory' || args[i] === '-mem') {
+      isMemory = true;
     } else if (args[i] === '--a2a') {
       isA2A = true;
     } else if (args[i] === '--autoskill' || args[i] === '-s-auto') {
@@ -634,7 +948,31 @@ if (require.main === module) {
     }
   }
 
-  if (isBench) {
+  if (isMemory) {
+    console.log('\n📊 Relatório de Memória & Garbage DiffAI:', getMemoryReport(), '\n');
+    process.exit(0);
+  } else if (isContinuous) {
+    if (!prompt) {
+      console.error('Informe a tarefa para a Esteira Contínua. Ex: node scripts/orchestrator.js -cp "Gere 3 regras de seguranca"');
+      process.exit(1);
+    }
+    console.log(`\n⚡ Disparando Esteira Contínua Assíncrona Multi-Chave (Overlapping Stream)...\n`);
+    runContinuousPipeline({
+      taskPrompt: prompt,
+      producerModel: 'groq/openai/gpt-oss-120b',
+      consumerModel: 'ag/claude-sonnet-4-6',
+      consumerConcurrency: 2,
+      onProducerUnit: (idx, line) => console.log(`\x1b[33m[PRODUTOR: Linha #${idx} gerada]\x1b[0m ${line}`),
+      onConsumerStart: (idx) => console.log(`  \x1b[36m⚡ [CONSUMIDOR: Analisando Linha #${idx} em paralelo...]\x1b[0m`),
+      onConsumerUnitComplete: (item) => console.log(`  \x1b[32m✅ [CONSUMIDOR: Linha #${item.index} pronta em ${item.duration}ms]:\x1b[0m ${item.processed.trim().slice(0, 100)}...`)
+    }).then(res => {
+      console.log(`\n🏁 Esteira concluída com sucesso! Total: ${res.totalDuration}ms (${res.itemsProcessed} itens processados)\n`);
+      process.exit(0);
+    }).catch(err => {
+      console.error('\n❌ Erro na esteira:', err.message);
+      process.exit(1);
+    });
+  } else if (isBench) {
     benchmarkCluster().then(() => process.exit(0));
   } else if (isRace) {
     if (!prompt) {
@@ -729,10 +1067,15 @@ module.exports = {
   streamQueryOmniRouter,
   speculativeRace,
   runSequentialPipeline,
+  runContinuousPipeline,
+  runSpeculativeVerification,
   pipelineReasonAndCode,
   parallelTasks,
   runEnsembleConsensus,
   benchmarkCluster,
+  getMemoryReport,
+  clearOrchestratorMemory,
+  getModelHealthReport,
   httpAgent,
   A2A_SYSTEM_HEADER,
   MODEL_ALIASES
