@@ -1,0 +1,32 @@
+{
+  "name": "diffai",
+  "version": "3.0.0",
+  "description": "DiffAI — Sistema Especializado de Inteligência Artificial com Auto-Aprendizado, Orquestrador Hiper-Veloz, Lazy Loading de 2.800+ Skills e Motor PhotoCraft em RAM",
+  "main": "api/server.js",
+  "scripts": {
+    "start": "node api/server.js",
+    "dev": "node --watch api/server.js",
+    "orchestrate": "node core/orchestrator.js",
+    "orchestrate:race": "node core/orchestrator.js -r -m",
+    "orchestrate:consensus": "node core/orchestrator.js -c",
+    "orchestrate:pipeline": "node core/orchestrator.js -s",
+    "orchestrate:benchmark": "node core/orchestrator.js -b",
+    "skills:build": "node core/build-skills-index.js",
+    "skills:search": "node core/load-skills.js",
+    "test": "node core/orchestrator.js -b"
+  },
+  "keywords": [
+    "ai",
+    "multi-agent",
+    "orchestrator",
+    "antigravity",
+    "skills",
+    "photocraft",
+    "supabase-rls",
+    "hedged-racing",
+    "flux",
+    "diffai"
+  ],
+  "author": "clepta2 <clepta2@gmail.com>",
+  "license": "MIT"
+}
