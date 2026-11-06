@@ -32,6 +32,7 @@ const {
   runContinuousPipeline,
   runSpeculativeVerification,
   runEnsembleConsensus,
+  scatterGatherMultiDoc,
   getMemoryReport,
   clearOrchestratorMemory,
   getModelHealthReport
@@ -155,11 +156,40 @@ const server = http.createServer(async (req, res) => {
         { id: 'diffai-verify', object: 'model', created: Date.now(), owned_by: 'diffai' },
         { id: 'diffai-racing', object: 'model', created: Date.now(), owned_by: 'diffai' },
         { id: 'diffai-consensus', object: 'model', created: Date.now(), owned_by: 'diffai' },
+        { id: 'diffai-scatter-gather', object: 'model', created: Date.now(), owned_by: 'diffai' },
         { id: 'claude-sonnet-4.6', object: 'model', created: Date.now(), owned_by: 'anthropic' },
         { id: 'deepseek-r1', object: 'model', created: Date.now(), owned_by: 'deepseek' },
         { id: 'gemini-3.1-flash', object: 'model', created: Date.now(), owned_by: 'google' }
       ]
     });
+    return;
+  }
+
+  // ⚡ Scatter-Gather Multi-Document Swarm (Até 16 chaves/conexões simultâneas)
+  if (req.method === 'POST' && (pathname === '/v1/scatter-gather' || pathname === '/api/scatter-gather')) {
+    if (!verifyAuth(req)) {
+      sendJson(res, 401, { error: { message: 'Chave de API DiffAI inválida ou ausente.', type: 'invalid_request_error' } });
+      return;
+    }
+    try {
+      const body = await readBody(req);
+      const documents = Array.isArray(body.documents) ? body.documents : [];
+      if (documents.length === 0) {
+        sendJson(res, 400, { error: { message: 'Nenhum documento fornecido no array "documents".' } });
+        return;
+      }
+      const concurrency = parseInt(body.concurrency || '16', 10);
+      const swarmResult = await scatterGatherMultiDoc(documents, {
+        concurrency,
+        model: body.model || 'auto',
+        analysisPrompt: body.prompt || body.analysisPrompt,
+        synthesize: body.synthesize !== false
+      });
+      sendJson(res, 200, swarmResult);
+    } catch (err) {
+      console.error('[DiffAI Scatter-Gather Error]', err);
+      sendJson(res, 500, { error: { message: err.message || 'Erro ao processar swarm scatter-gather.' } });
+    }
     return;
   }
 

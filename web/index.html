@@ -1,6 +1,9 @@
- !DOCTYPE html>
+<!DOCTYPE html>
 <html lang="pt-BR" data-theme="dark" style="background-color: #080c14; color-scheme: dark;">
 <head>
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Hermes AI — Copiloto Executivo & Inteligência Multi-Tenant | OZPro</title>
@@ -252,6 +255,142 @@
             font-size: 11.5px;
             color: var(--lumo-text-dim);
             line-height: 1.4;
+        }
+
+        /* Botão de Estrela / Favorito */
+        .chat-list-item .item-actions .btn-star {
+            color: #94a3b8;
+            transition: all 0.2s;
+        }
+        .chat-list-item .item-actions .btn-star.active {
+            opacity: 1 !important;
+            color: #f59e0b !important;
+        }
+        .chat-list-item .item-actions .btn-star:hover {
+            color: #f59e0b !important;
+            transform: scale(1.18);
+        }
+
+        /* Banner de Mensagem Fixada */
+        .pinned-message-banner {
+            display: none;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            background: linear-gradient(90deg, rgba(168, 85, 247, 0.18), rgba(99, 102, 241, 0.15));
+            border: 1px solid rgba(168, 85, 247, 0.4);
+            border-radius: 10px;
+            padding: 8px 14px;
+            margin-bottom: 12px;
+            font-size: 12px;
+            color: #e2e8f0;
+            backdrop-filter: blur(12px);
+            animation: fadeIn 0.2s ease;
+        }
+        .pinned-message-banner .pinned-text {
+            flex: 1;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            cursor: pointer;
+            color: #e0e7ff;
+        }
+        .pinned-message-banner .pinned-text:hover {
+            color: #c4b5fd;
+            text-decoration: underline;
+        }
+        .pinned-message-banner .btn-unpin {
+            background: transparent;
+            border: none;
+            color: #94a3b8;
+            cursor: pointer;
+            font-size: 13px;
+            padding: 2px 6px;
+            border-radius: 4px;
+            transition: color 0.15s;
+        }
+        .pinned-message-banner .btn-unpin:hover {
+            color: #ef4444;
+        }
+
+        /* Menu de Contexto Obsidiana / Glassmorphism */
+        .hermes-context-menu {
+            position: fixed;
+            z-index: 99999;
+            min-width: 230px;
+            background: rgba(15, 23, 42, 0.96);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.14);
+            border-radius: 12px;
+            box-shadow: 0 16px 40px rgba(0, 0, 0, 0.75), 0 0 0 1px rgba(99, 102, 241, 0.25);
+            padding: 6px;
+            display: none;
+            flex-direction: column;
+            animation: hermesFadeInScale 0.12s cubic-bezier(0.16, 1, 0.3, 1);
+            user-select: none;
+        }
+        @keyframes hermesFadeInScale {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        .hermes-context-menu .context-menu-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 6px 8px 4px;
+        }
+        .hermes-context-menu .context-menu-badge {
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #94a3b8;
+        }
+        .hermes-context-menu .context-menu-hint {
+            font-size: 10px;
+            color: #a855f7;
+            font-weight: 600;
+        }
+        .hermes-context-menu .context-menu-divider {
+            height: 1px;
+            background: rgba(255, 255, 255, 0.08);
+            margin: 4px 0;
+        }
+        .hermes-context-menu .context-menu-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 10px;
+            font-size: 12.5px;
+            color: #e2e8f0;
+            background: transparent;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            text-align: left;
+            transition: all 0.12s ease;
+            width: 100%;
+        }
+        .hermes-context-menu .context-menu-item:hover {
+            background: rgba(255, 255, 255, 0.08);
+            color: #ffffff;
+            transform: translateX(2px);
+        }
+        .hermes-context-menu .context-menu-item i {
+            width: 16px;
+            text-align: center;
+            font-size: 13px;
+        }
+        .hermes-context-menu .context-menu-shortcut {
+            margin-left: auto;
+            font-size: 10.5px;
+            color: #64748b;
+            font-family: monospace;
+        }
+        .hermes-context-menu .context-menu-item.danger:hover {
+            background: rgba(239, 68, 68, 0.18);
+            color: #fca5a5;
         }
 
         /* Rodapé da Sidebar */
@@ -947,9 +1086,242 @@
             flex-shrink: 0;
         }
         .step-heading-text {
+            white-space: normal;
+            line-height: 1.45;
+            word-break: break-word;
+            flex: 1;
+        }
+
+        /* ─── CHIPS INTERATIVOS DE VARIÁVEIS / CAMPOS EM TEMPO REAL ─── */
+        .live-var-pill {
+            display: inline-flex;
+            align-items: center;
+            background: rgba(99, 102, 241, 0.16);
+            border: 1px dashed rgba(129, 140, 248, 0.6);
+            color: #c7d2fe;
+            padding: 1px 8px;
+            border-radius: 6px;
+            font-family: 'JetBrains Mono', 'Fira Code', monospace;
+            font-size: 12.5px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            user-select: all;
+            margin: 0 2px;
+        }
+        .live-var-pill:hover {
+            background: rgba(99, 102, 241, 0.32);
+            border-color: #a5b4fc;
+            color: #ffffff;
+            box-shadow: 0 0 10px rgba(99, 102, 241, 0.4);
+            transform: translateY(-1px);
+        }
+        .live-var-pill.filled {
+            background: rgba(16, 185, 129, 0.18);
+            border: 1px solid rgba(52, 211, 153, 0.5);
+            color: #6ee7b7;
+            font-family: inherit;
+            font-weight: 700;
+            box-shadow: 0 0 8px rgba(16, 185, 129, 0.25);
+        }
+
+        /* ─── PAINEL INTERATIVO DE PREENCHIMENTO EM TEMPO REAL ─── */
+        .live-vars-editor {
+            background: linear-gradient(145deg, #0d1322 0%, #111a2e 100%);
+            border: 1px solid rgba(99, 102, 241, 0.28);
+            border-radius: 14px;
+            padding: 16px 18px;
+            margin-top: 16px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+            animation: fadeIn 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .live-vars-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 12px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .live-vars-title {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            font-weight: 700;
+            color: #f1f5f9;
+        }
+        .live-vars-count {
+            font-size: 11px;
+            color: #818cf8;
+            background: rgba(99, 102, 241, 0.18);
+            padding: 2px 8px;
+            border-radius: 10px;
+            border: 1px solid rgba(99, 102, 241, 0.3);
+        }
+        .btn-copy-live-ready {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: #fff;
+            border: none;
+            padding: 6px 14px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.18s;
+            box-shadow: 0 2px 10px rgba(16, 185, 129, 0.35);
+        }
+        .btn-copy-live-ready:hover {
+            filter: brightness(1.1);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 14px rgba(16, 185, 129, 0.5);
+        }
+        .live-vars-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 10px;
+        }
+        .live-var-field {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .live-var-label {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--lumo-text-dim);
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            text-transform: capitalize;
+        }
+        .live-var-input {
+            background: rgba(15, 23, 42, 0.85);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 8px;
+            padding: 8px 12px;
+            color: #fff;
+            font-size: 12.5px;
+            outline: none;
+            transition: all 0.18s ease;
+        }
+        .live-var-input:focus {
+            border-color: #818cf8;
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.25);
+            background: #1e293b;
+        }
+        .live-var-input.highlight-glow {
+            border-color: #38bdf8 !important;
+            box-shadow: 0 0 16px rgba(56, 189, 248, 0.6) !important;
+            background: #0c4a6e !important;
+        }
+
+        /* ─── REALCE VISUAL DE TERMOS IMPORTANTES (CORES & BADGES) ─── */
+        .lumo-highlight-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            font-weight: 600;
+            padding: 1px 7px;
+            border-radius: 6px;
+            font-size: 0.95em;
+            margin: 0 2px;
+            vertical-align: baseline;
+        }
+        .badge-currency {
+            background: rgba(16, 185, 129, 0.14);
+            border: 1px solid rgba(16, 185, 129, 0.35);
+            color: #34d399;
+        }
+        .badge-time {
+            background: rgba(245, 158, 11, 0.14);
+            border: 1px solid rgba(245, 158, 11, 0.35);
+            color: #fbbf24;
+        }
+        .badge-tag {
+            background: rgba(56, 189, 248, 0.14);
+            border: 1px solid rgba(56, 189, 248, 0.35);
+            color: #38bdf8;
+        }
+        .lumo-strong-highlight {
+            color: #ffffff;
+            font-weight: 700;
+            text-shadow: 0 1px 8px rgba(99, 102, 241, 0.2);
+            border-bottom: 1px dotted rgba(99, 102, 241, 0.45);
+            padding-bottom: 1px;
+        }
+
+        /* ─── POPOVER DE AÇÕES CONTEXTUAIS (DUPLO CLIQUE / SELEÇÃO) ─── */
+        .ai-selection-popover {
+            position: fixed;
+            z-index: 9999;
+            background: rgba(13, 18, 32, 0.96);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(99, 102, 241, 0.4);
+            border-radius: 12px;
+            padding: 8px;
+            box-shadow: 0 16px 40px rgba(0, 0, 0, 0.7), 0 0 1px rgba(255, 255, 255, 0.2);
+            width: 270px;
+            animation: popoverFadeIn 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+            user-select: none;
+        }
+        @keyframes popoverFadeIn {
+            from { opacity: 0; transform: translateY(6px) scale(0.97); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        .popover-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 4px 8px 6px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            margin-bottom: 6px;
+        }
+        .popover-word-badge {
+            font-size: 11.5px;
+            font-weight: 700;
+            color: #818cf8;
+            max-width: 220px;
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
+        }
+        .popover-items {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+        .popover-item {
+            display: flex;
+            align-items: center;
+            gap: 9px;
+            padding: 7px 10px;
+            border-radius: 8px;
+            border: none;
+            background: transparent;
+            color: #f1f5f9;
+            font-size: 12.5px;
+            font-weight: 500;
+            cursor: pointer;
+            text-align: left;
+            width: 100%;
+            transition: all 0.15s ease;
+        }
+        .popover-item:hover {
+            background: rgba(99, 102, 241, 0.18);
+            color: #ffffff;
+            transform: translateX(2px);
+        }
+        .popover-item i {
+            width: 16px;
+            text-align: center;
+            font-size: 13px;
         }
         .step-accordion-action {
             display: flex;
@@ -1477,55 +1849,220 @@
         /* ==========================================================================
            4. WORKSPACE / CRIAÇÕES (CANVAS SPLIT PANE LATERAL)
            ========================================================================== */
+        .canvas-resizer-handle {
+            width: 10px;
+            margin: 0 -5px;
+            background: transparent;
+            cursor: col-resize;
+            position: relative;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 45;
+            user-select: none;
+            touch-action: none;
+            transition: background 0.15s ease;
+            flex-shrink: 0;
+        }
+        .canvas-resizer-handle.active {
+            display: flex;
+        }
+        .canvas-resizer-handle:hover,
+        .canvas-resizer-handle.dragging {
+            background: rgba(99, 102, 241, 0.3);
+        }
+        .resizer-pill {
+            width: 4px;
+            height: 48px;
+            border-radius: 4px;
+            background: rgba(167, 139, 250, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #c4b5fd;
+            font-size: 8px;
+            transition: all 0.2s ease;
+        }
+        .canvas-resizer-handle:hover .resizer-pill,
+        .canvas-resizer-handle.dragging .resizer-pill {
+            background: #8b5cf6;
+            height: 72px;
+            width: 6px;
+            box-shadow: 0 0 14px rgba(139, 92, 246, 0.9);
+        }
+
         .workspace-canvas-pane {
             width: 0px;
-            background: #0a0e18;
+            background: #090d16;
             border-left: 1px solid var(--lumo-border);
             display: flex;
             flex-direction: column;
-            transition: width 0.28s cubic-bezier(0.4, 0, 0.2, 1);
             overflow: hidden;
             position: relative;
             z-index: 35;
             flex-shrink: 0;
+            transition: width 0.24s cubic-bezier(0.16, 1, 0.3, 1);
         }
         .workspace-canvas-pane.active {
-            width: 480px;
+            width: 580px;
         }
+        .workspace-canvas-pane.resizing {
+            transition: none !important;
+            user-select: none;
+        }
+        .workspace-canvas-pane.resizing iframe {
+            pointer-events: none;
+        }
+
         .canvas-header {
-            padding: 14px 18px;
-            border-bottom: 1px solid var(--lumo-border);
+            height: 52px;
+            padding: 0 16px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
             display: flex;
             align-items: center;
             justify-content: space-between;
-            background: #0e1422;
-        }
-        .canvas-body {
-            flex: 1;
-            padding: 16px;
-            overflow-y: auto;
-            color: #e2e8f0;
-            display: flex;
-            flex-direction: column;
+            background: #0d1220;
             gap: 12px;
+            flex-shrink: 0;
         }
-        .canvas-code-container {
-            background: #060911;
-            border: 1px solid rgba(255,255,255,0.08);
+        .canvas-header-left {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .canvas-tabs {
+            display: flex;
+            align-items: center;
+            background: rgba(0, 0, 0, 0.35);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 8px;
+            padding: 3px;
+            gap: 3px;
+        }
+        .canvas-tab-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            background: transparent;
+            border: none;
+            color: #94a3b8;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.16s ease;
+        }
+        .canvas-tab-btn:hover {
+            color: #fff;
+            background: rgba(255, 255, 255, 0.06);
+        }
+        .canvas-tab-btn.active {
+            background: rgba(99, 102, 241, 0.22);
+            color: #ffffff;
+            border: 1px solid rgba(139, 92, 246, 0.4);
+            box-shadow: 0 2px 8px rgba(99, 102, 241, 0.25);
+        }
+        .canvas-tab-badge {
+            font-size: 9.5px;
+            background: rgba(16, 185, 129, 0.2);
+            color: #34d399;
+            border: 1px solid rgba(16, 185, 129, 0.35);
+            padding: 1px 5px;
             border-radius: 10px;
-            padding: 14px;
-            font-family: 'Fira Code', 'Consolas', monospace;
-            font-size: 12.5px;
-            line-height: 1.6;
-            overflow-x: auto;
-            color: #93c5fd;
-            white-space: pre-wrap;
-            flex: 1;
+            font-weight: 700;
         }
 
-        /* ==========================================================================
-           5. MODAIS (PROJETOS & CONFIGURAÇÕES 6 ABAS) — TRANSIÇÕES GPU ULTRARRÁPIDAS
-           ========================================================================== */
+        .canvas-header-right {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .canvas-viewports-dock {
+            display: flex;
+            align-items: center;
+            gap: 2px;
+            background: rgba(0, 0, 0, 0.28);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 8px;
+            padding: 2px;
+        }
+        .btn-viewport-opt {
+            background: transparent;
+            border: none;
+            color: #94a3b8;
+            width: 28px;
+            height: 28px;
+            border-radius: 5px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+        .btn-viewport-opt:hover {
+            color: #fff;
+            background: rgba(255, 255, 255, 0.08);
+        }
+        .btn-viewport-opt.active {
+            color: #38bdf8;
+            background: rgba(56, 189, 248, 0.15);
+        }
+
+        .canvas-header-actions {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .canvas-body-view {
+            flex: 1;
+            height: calc(100% - 52px);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            position: relative;
+            background: #060911;
+        }
+        .canvas-preview-iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+            background: #ffffff;
+            display: block;
+        }
+        .canvas-code-toolbar {
+            padding: 10px 16px;
+            background: #0b101c;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .code-info-badge {
+            font-size: 11.5px;
+            font-weight: 700;
+            color: #a78bfa;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .canvas-code-container {
+            flex: 1;
+            margin: 0;
+            padding: 16px;
+            overflow: auto;
+            font-family: 'Fira Code', 'Consolas', monospace;
+            font-size: 13px;
+            color: #f1f5f9;
+            background: #070a12;
+            line-height: 1.6;
+            border: none;
+            border-radius: 0;
+            white-space: pre-wrap;
+        }
+        
         .modal-overlay {
             position: fixed;
             inset: 0;
@@ -2248,6 +2785,7 @@
         .btn-copilot-send:hover { background: #9333ea; }
 
 </style>
+    <script src="/shared/wasm/photocraft-bridge.js"></script>
 </head>
 <body>
 
@@ -2283,6 +2821,15 @@
             </div>
 
             <div class="sidebar-scroll">
+                <!-- Barra de Pesquisa Rápida Integrada -->
+                <div class="sidebar-search-box" id="sidebarSearchBox" style="display:none;padding:6px 0 10px;">
+                    <div style="position:relative;display:flex;align-items:center">
+                        <i class="fas fa-search" style="position:absolute;left:10px;font-size:11px;color:#94a3b8"></i>
+                        <input type="text" id="sidebarSearchInput" placeholder="Filtrar conversas..." style="width:100%;padding:6px 28px 6px 28px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);border-radius:8px;color:#fff;font-size:12px;outline:none;" oninput="filtrarHistoricoSidebar(this.value)">
+                        <button onclick="fecharBuscaSidebar()" style="position:absolute;right:8px;background:none;border:none;color:#94a3b8;cursor:pointer;font-size:11px"><i class="fas fa-times"></i></button>
+                    </div>
+                </div>
+
                 <!-- Seção Projetos -->
                 <div class="section-header">
                     <span>Projetos</span>
@@ -2312,8 +2859,8 @@
 
             <!-- Rodapé da Sidebar -->
             <div class="sidebar-footer">
-                <button class="btn-upgrade-pill" onclick="abrirAbaConfiguracoes('conta')">
-                    <i class="fas fa-crown"></i> Fazer Upgrade
+                <button class="btn-upgrade-pill" onclick="window.open('https://ai.ozpro.com.br/#plans', '_blank')" title="Comprar pacotes de tokens e planos de IA no portal oficial">
+                    <i class="fas fa-bolt"></i> Planos &amp; Tokens
                 </button>
                 <div class="user-profile-badge" onclick="abrirModalConfiguracoes()">
                     <div class="profile-avatar-c" id="userAvatarChar">C</div>
@@ -2392,6 +2939,13 @@
                     </div>
                 </div>
 
+                <!-- BANNER DE MENSAGEM FIXADA (PINNED MESSAGE) -->
+                <div class="pinned-message-banner" id="pinnedMessageBanner">
+                    <span style="color:#a855f7;font-weight:700"><i class="fas fa-thumbtack"></i> FIXADO:</span>
+                    <span class="pinned-text" id="pinnedMessageText" onclick="rolarParaMensagemFixada()" title="Clique para rolar até a mensagem fixada"></span>
+                    <button class="btn-unpin" onclick="desafixarMensagem()" title="Desafixar mensagem"><i class="fas fa-times"></i></button>
+                </div>
+
                 <!-- FLUXO DE MENSAGENS ATIVAS -->
                 <div class="chat-flow-container" id="chatFlowContainer"></div>
             </div>
@@ -2468,22 +3022,59 @@
             </div>
         </main>
 
-        <!-- 4. WORKSPACE / CRIAÇÕES (CANVAS SPLIT PANE) -->
+        <!-- BARRA DIVISORA DE REDIMENSIONAMENTO DO CANVAS (DRAGGABLE SPLITTER) -->
+        <div class="canvas-resizer-handle" id="canvasResizerHandle" title="Arraste para redimensionar (Duplo clique para 50/50)">
+            <div class="resizer-pill">
+                <i class="fas fa-grip-lines-vertical"></i>
+            </div>
+        </div>
+
+        <!-- 4. WORKSPACE / CRIAÇÕES (CANVAS SPLIT PANE REDIMENSIONÁVEL COM LIVE PREVIEW) -->
         <aside class="workspace-canvas-pane" id="canvasWorkspacePane">
+            <!-- Header do Canvas com Abas e Controles de Viewport -->
             <div class="canvas-header">
-                <span style="font-weight:700;color:#fff;font-size:13.5px">
-                    <i class="fas fa-layer-group" style="color:#a855f7;margin-right:8px"></i> Criações &amp; Documentos
-                </span>
-                <div style="display:flex;gap:6px">
-                    <button class="btn-icon-subtle" onclick="copiarConteudoCanvas()" title="Copiar Canvas"><i class="fas fa-copy"></i></button>
-                    <button class="btn-icon-subtle" onclick="toggleCanvasWorkspace()"><i class="fas fa-xmark"></i></button>
+                <div class="canvas-header-left">
+                    <div class="canvas-tabs">
+                        <button type="button" class="canvas-tab-btn active" id="tabCanvasPreview" onclick="switchCanvasTab('preview')">
+                            <i class="fas fa-play" style="color:#10b981;font-size:11px"></i>
+                            <span>Ao Vivo</span>
+                            <span class="canvas-tab-badge">App</span>
+                        </button>
+                        <button type="button" class="canvas-tab-btn" id="tabCanvasCode" onclick="switchCanvasTab('code')">
+                            <i class="fas fa-code" style="color:#a78bfa;font-size:11px"></i>
+                            <span id="canvasLangLabel">Código</span>
+                        </button>
+                    </div>
+                </div>
+                <div class="canvas-header-right">
+                    <!-- Presets Rápidos de Largura -->
+                    <div class="canvas-viewports-dock">
+                        <button type="button" class="btn-viewport-opt" onclick="setCanvasWidthPreset('mobile')" title="Visualização Mobile (390px)"><i class="fas fa-mobile-screen"></i></button>
+                        <button type="button" class="btn-viewport-opt" onclick="setCanvasWidthPreset('tablet')" title="Visualização Tablet (768px)"><i class="fas fa-tablet-screen-button"></i></button>
+                        <button type="button" class="btn-viewport-opt" onclick="setCanvasWidthPreset('half')" title="Dividir 50% / 50%"><i class="fas fa-table-columns"></i></button>
+                        <button type="button" class="btn-viewport-opt" onclick="setCanvasWidthPreset('full')" title="Tela Quase Cheia (88%)"><i class="fas fa-expand"></i></button>
+                    </div>
+                    <div class="canvas-header-actions">
+                        <button type="button" class="btn-icon-subtle" onclick="recarregarPreviewCanvas()" title="Recarregar aplicativo"><i class="fas fa-rotate-right"></i></button>
+                        <button type="button" class="btn-icon-subtle" onclick="abrirPreviewNovaAba()" title="Abrir em tela cheia na nova aba"><i class="fas fa-arrow-up-right-from-square"></i></button>
+                        <button type="button" class="btn-icon-subtle" onclick="copiarConteudoCanvas()" title="Copiar Código"><i class="fas fa-copy"></i></button>
+                        <button type="button" class="btn-icon-subtle" onclick="toggleCanvasWorkspace(false)" title="Fechar Canvas"><i class="fas fa-xmark"></i></button>
+                    </div>
                 </div>
             </div>
-            <div class="canvas-body" id="canvasBodyContent">
-                <div style="font-size:12.5px;color:var(--lumo-text-dim);text-align:center;padding-top:40px">
-                    <i class="fas fa-file-code" style="font-size:36px;margin-bottom:12px;display:block;opacity:0.5"></i>
-                    Abra códigos, gráficos e páginas gerados pela IA diretamente nesta área de trabalho lateral.
+
+            <!-- Visualização 1: Preview ao Vivo em Iframe Sandbox Blindado -->
+            <div class="canvas-body-view" id="canvasPreviewView">
+                <iframe id="canvasPreviewIframe" sandbox="allow-scripts allow-modals allow-forms allow-same-origin" class="canvas-preview-iframe" title="Preview Interativo"></iframe>
+            </div>
+
+            <!-- Visualização 2: Código-fonte -->
+            <div class="canvas-body-view" id="canvasCodeView" style="display:none">
+                <div class="canvas-code-toolbar">
+                    <span class="code-info-badge" id="canvasCodeStatsBadge"><i class="fas fa-code"></i> HTML5 + CSS + JS</span>
+                    <button class="btn-code-action" onclick="baixarArquivoCanvasAtual()"><i class="fas fa-download"></i> Baixar Arquivo</button>
                 </div>
+                <pre class="canvas-code-container" id="canvasCodePre"><code></code></pre>
             </div>
         </aside>
     </div>
@@ -2554,7 +3145,28 @@
                                     <li><i class="fas fa-check" style="color:#f59e0b;margin-right:6px"></i> Logs e auditoria por tenant</li>
                                 </ul>
                             </div>
-                            <button class="btn-modal-cancel" style="width:100%;color:#fff">Obtenha o Hermes Business</button>
+                            <button class="btn-modal-cancel" style="width:100%;color:#fff" onclick="window.open('https://ai.ozpro.com.br/#plans', '_blank')">Obtenha o Hermes Business</button>
+                        </div>
+                    </div>
+
+                    <!-- Gestão de Acesso, Login e Sincronização Cross-Domain -->
+                    <div style="margin-top:22px;padding:16px;background:#090d16;border-radius:12px;border:1px solid rgba(99,102,241,0.25)">
+                        <div style="font-size:13px;font-weight:700;color:#fff;margin-bottom:8px;display:flex;align-items:center;gap:8px">
+                            <i class="fas fa-key" style="color:#6366f1"></i> Acesso &amp; Sincronização de Histórico
+                        </div>
+                        <div style="font-size:12px;color:var(--lumo-text-dim);margin-bottom:14px;line-height:1.5">
+                            Conecte com sua conta do Supabase ou migre conversas de outro domínio (ex: ai.ozpro.com.br).
+                        </div>
+                        <div style="display:flex;flex-wrap:wrap;gap:10px">
+                            <button class="btn-send-pill" style="padding:7px 14px;font-size:12px" onclick="abrirModalLogin()">
+                                <i class="fas fa-right-to-bracket"></i> Entrar / Trocar de Conta
+                            </button>
+                            <button class="btn-modal-cancel" style="padding:7px 14px;font-size:12px;color:#a5b4fc;border-color:rgba(99,102,241,0.3)" onclick="dispararSincronizacaoCrossDomain(true)">
+                                <i class="fas fa-arrows-rotate"></i> Sincronizar Histórico do ai.ozpro.com.br
+                            </button>
+                            <button class="btn-modal-cancel" style="padding:7px 14px;font-size:12px;color:#ef4444;border-color:rgba(239,68,68,0.3)" onclick="desconectarContaHermes()">
+                                <i class="fas fa-arrow-right-from-bracket"></i> Desconectar
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -2619,6 +3231,22 @@
                         </div>
                         <input type="checkbox" id="toggleMemories" checked style="accent-color:var(--lumo-primary);width:18px;height:18px;cursor:pointer">
                     </div>
+                    <!-- Seção de Gerenciamento Ativo de Memórias do Tenant -->
+                    <div style="margin-top:20px;border-top:1px solid rgba(255,255,255,0.08);padding-top:16px">
+                        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+                            <span style="font-weight:700;font-size:13px;color:#fff;display:flex;align-items:center;gap:7px">
+                                <i class="fas fa-brain" style="color:var(--lumo-primary)"></i> Memórias e Fatos Aprendidos do Tenant
+                            </span>
+                            <button type="button" class="btn-icon-subtle" onclick="carregarMemoriasTenantUI()" title="Recarregar memórias"><i class="fas fa-rotate-right"></i></button>
+                        </div>
+                        <div id="tenantMemoriesList" style="display:flex;flex-direction:column;gap:8px;max-height:220px;overflow-y:auto;padding-right:4px">
+                            <div style="font-size:12px;color:var(--lumo-text-dim);text-align:center;padding:12px 0">Carregando memórias aprendidas...</div>
+                        </div>
+                        <div style="margin-top:14px;display:flex;gap:8px">
+                            <input type="text" id="inpNovaMemoria" class="modal-input" placeholder="Ex: Aqui na loja nós sempre parcelamos em até 3x sem juros..." style="font-size:12px" onkeydown="if(event.key==='Enter') adicionarMemoriaManual()">
+                            <button type="button" class="btn-modal-save" onclick="adicionarMemoriaManual()" style="white-space:nowrap;padding:8px 16px;font-size:12px"><i class="fas fa-plus"></i> Adicionar</button>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Aba 4: Geral -->
@@ -2680,6 +3308,36 @@
                         Copiloto inteligente e orquestrador do ecossistema <strong>OZPro ERP &amp; WA Studio</strong>.<br>
                         Arquitetura de dados exclusiva sobre <strong>Supabase PostgreSQL</strong> com isolamento absoluto de tenants (Row-Level Security) e failover multi-modelo instantâneo.
                     </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: LOGIN / TROCA DE CONTA SUPABASE -->
+    <div class="modal-overlay" id="modalAuthHermes" onclick="if(event.target===this) fecharModalLogin()">
+        <div class="project-modal-card" style="max-width:440px">
+            <div class="modal-head">
+                <div class="modal-head-title"><i class="fas fa-shield-halved" style="color:#6366f1"></i> Autenticação OZPro</div>
+                <button class="btn-icon-subtle" onclick="fecharModalLogin()"><i class="fas fa-xmark"></i></button>
+            </div>
+            <div class="modal-body-content">
+                <p style="font-size:13px;color:var(--lumo-text-dim);margin-bottom:16px;line-height:1.5">
+                    Entre com seu e-mail e senha do Supabase para acessar as conversas e configurações da sua empresa.
+                </p>
+                <div style="margin-bottom:14px">
+                    <label style="display:block;font-size:12px;color:var(--lumo-text-dim);margin-bottom:6px">E-mail</label>
+                    <input type="email" id="authInputEmail" placeholder="seu-email@exemplo.com" class="input-project-modal" autocomplete="username">
+                </div>
+                <div style="margin-bottom:16px">
+                    <label style="display:block;font-size:12px;color:var(--lumo-text-dim);margin-bottom:6px">Senha</label>
+                    <input type="password" id="authInputPassword" placeholder="Sua senha de acesso" class="input-project-modal" autocomplete="current-password">
+                </div>
+                <div id="authErrorMessage" style="display:none;background:rgba(239,68,68,0.15);border:1px solid rgba(239,68,68,0.3);color:#fca5a5;padding:10px 14px;border-radius:8px;font-size:12px;margin-bottom:14px"></div>
+                <div style="display:flex;justify-content:flex-end;gap:10px">
+                    <button class="btn-modal-cancel" onclick="fecharModalLogin()">Cancelar</button>
+                    <button class="btn-send-pill" id="btnSubmitAuth" onclick="executarLoginSupabase()">
+                        <i class="fas fa-right-to-bracket"></i> Entrar
+                    </button>
                 </div>
             </div>
         </div>
@@ -2951,6 +3609,9 @@
                     <i class="fas fa-microchip" style="color:#10b981"></i> RAM Local: <strong>~18 MB</strong> (0ms I/O)
                 </span>
                 <span class="studio-dimensions-badge" id="studioDimsBadge">1024 × 1024 px</span>
+                <span class="studio-ram-badge" id="studioWasmBadge" style="background:rgba(99,102,241,0.18);border-color:rgba(99,102,241,0.35);color:#c7d2fe">
+                    <i class="fas fa-bolt" style="color:#a855f7"></i> Motor: <strong>Rust WASM</strong> (Zero-GC)
+                </span>
             </div>
             <div class="studio-header-right">
                 <button type="button" class="btn-studio-header" id="btnSalvarRmount" onclick="studioSalvarNoRmount()" style="background:rgba(16,185,129,0.18);border-color:rgba(16,185,129,0.4);color:#10b981"><i class="fas fa-cloud-arrow-up"></i> Salvar no rmount (5TB)</button>
@@ -3129,26 +3790,103 @@
         // Cofre Local Criptografado por Tenant (Zero Data Loss)
         const TenantChatVault = {
             getStorageKey() {
-                return 'hermes_vault_chats_' + (currentCompanyId || 'default');
+                return 'hermes_vault_chats_' + (currentCompanyId || 'diffstoregja322');
             },
             getChats() {
                 try {
-                    const raw = localStorage.getItem(this.getStorageKey());
-                    return raw ? JSON.parse(raw) : [];
+                    const primaryKey = this.getStorageKey();
+                    let list = [];
+                    const raw = localStorage.getItem(primaryKey);
+                    if (raw) {
+                        try { list = JSON.parse(raw); } catch (_) {}
+                    }
+                    if (!Array.isArray(list)) list = [];
+
+                    // Resiliência contra perda: varredura em todas as chaves de histórico locais
+                    const map = new Map();
+                    list.forEach(c => { if (c && c.id) map.set(c.id, c); });
+
+                    for (let i = 0; i < localStorage.length; i++) {
+                        const k = localStorage.key(i);
+                        if (k && (k.startsWith('hermes_vault_chats_') || k === 'hermes_chats' || k === 'ozpro_hermes_chats')) {
+                            try {
+                                const otherRaw = localStorage.getItem(k);
+                                const otherList = otherRaw ? JSON.parse(otherRaw) : [];
+                                if (Array.isArray(otherList)) {
+                                    otherList.forEach(c => {
+                                        if (c && c.id && !map.has(c.id)) {
+                                            map.set(c.id, c);
+                                        }
+                                    });
+                                }
+                            } catch (_) {}
+                        }
+                    }
+
+                    const merged = Array.from(map.values()).sort((a, b) => new Date(b.updated_at || 0) - new Date(a.updated_at || 0));
+                    if (merged.length > list.length) {
+                        try { localStorage.setItem(primaryKey, JSON.stringify(merged.slice(0, 150))); } catch (_) {}
+                    }
+                    return merged;
                 } catch (_) { return []; }
             },
             saveChat(chat) {
-                if (isIncognito) return;
+                if (isIncognito || !chat || !chat.id) return;
                 const chats = this.getChats();
                 const idx = chats.findIndex(c => c.id === chat.id);
+                const updatedChat = {
+                    ...chat,
+                    is_favorite: typeof chat.is_favorite === 'boolean' ? chat.is_favorite : (typeof chat.isFavorite === 'boolean' ? chat.isFavorite : false),
+                    updated_at: new Date().toISOString()
+                };
                 if (idx >= 0) {
-                    chats[idx] = { ...chats[idx], ...chat, updated_at: new Date().toISOString() };
+                    chats[idx] = { ...chats[idx], ...updatedChat };
                 } else {
-                    chats.unshift(chat);
+                    chats.unshift(updatedChat);
                 }
                 try {
-                    localStorage.setItem(this.getStorageKey(), JSON.stringify(chats.slice(0, 100)));
+                    localStorage.setItem(this.getStorageKey(), JSON.stringify(chats.slice(0, 150)));
                 } catch (_) {}
+
+                // Sincroniza em segundo plano com o Supabase PostgreSQL
+                try {
+                    fetch(`/api/admin/hermes-chat?action=save_chat&company_id=${encodeURIComponent(currentCompanyId || 'diffstoregja322')}`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${currentAuthToken}`,
+                            'x-company-id': currentCompanyId || 'diffstoregja322'
+                        },
+                        body: JSON.stringify({ chat: updatedChat })
+                    }).catch(() => {});
+                } catch (_) {}
+            },
+            toggleFavorite(chatId) {
+                const chats = this.getChats();
+                const chat = chats.find(c => c.id === chatId);
+                if (!chat) return false;
+                const newStatus = !(chat.is_favorite || chat.isFavorite);
+                chat.is_favorite = newStatus;
+                chat.isFavorite = newStatus;
+                chat.updated_at = new Date().toISOString();
+                try {
+                    localStorage.setItem(this.getStorageKey(), JSON.stringify(chats));
+                } catch (_) {}
+
+                // Sincroniza estado de favorito na nuvem Supabase
+                try {
+                    fetch(`/api/admin/hermes-chat?action=toggle_favorite&company_id=${encodeURIComponent(currentCompanyId || 'diffstoregja322')}`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${currentAuthToken}`,
+                            'x-company-id': currentCompanyId || 'diffstoregja322'
+                        },
+                        body: JSON.stringify({ id: chatId, is_favorite: newStatus })
+                    }).catch(() => {});
+                } catch (_) {}
+
+                return newStatus;
             },
             getChat(id) {
                 return this.getChats().find(c => c.id === id);
@@ -3157,6 +3895,16 @@
                 const chats = this.getChats().filter(c => c.id !== id);
                 try {
                     localStorage.setItem(this.getStorageKey(), JSON.stringify(chats));
+                } catch (_) {}
+                // Exclui na nuvem Supabase
+                try {
+                    fetch(`/api/admin/hermes-chat?action=delete_chat&id=${encodeURIComponent(id)}&company_id=${encodeURIComponent(currentCompanyId || 'diffstoregja322')}`, {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${currentAuthToken}`,
+                            'x-company-id': currentCompanyId || 'diffstoregja322'
+                        }
+                    }).catch(() => {});
                 } catch (_) {}
             }
         };
@@ -3312,7 +4060,7 @@
             currentUserEmail = sbEmail || storedEmail || (currentCompanyId.includes('@') ? currentCompanyId : `${currentCompanyId}@ozpro.com.br`);
 
             if (!currentAuthToken) {
-                const savedKey = localStorage.getItem('omnirouter_api_key') || 'sk-diffai-SUA-CHAVE-MESTRE-AQUI';
+                const savedKey = localStorage.getItem('omnirouter_api_key') || '';
                 currentAuthToken = savedKey;
             }
 
@@ -3359,21 +4107,235 @@
             carregarProjetosTenant();
         }
 
-        // Histórico por Tenant (Híbrido Nuvem Supabase + Vault Local Resiliente)
+        // ─── GESTÃO DE AUTENTICAÇÃO E MIGRAÇÃO CROSS-DOMAIN ───
+        function abrirModalLogin() {
+            fecharModalConfiguracoes();
+            const m = document.getElementById('modalAuthHermes');
+            if (m) {
+                m.classList.add('active');
+                const inp = document.getElementById('authInputEmail');
+                if (inp) {
+                    if (currentUserEmail && !currentUserEmail.endsWith('@ozpro.com.br')) {
+                        inp.value = currentUserEmail;
+                    }
+                    setTimeout(() => inp.focus(), 80);
+                }
+            }
+        }
+
+        function fecharModalLogin() {
+            const m = document.getElementById('modalAuthHermes');
+            if (m) m.classList.remove('active');
+            const err = document.getElementById('authErrorMessage');
+            if (err) err.style.display = 'none';
+        }
+
+        async function executarLoginSupabase() {
+            const emailInp = document.getElementById('authInputEmail');
+            const passInp = document.getElementById('authInputPassword');
+            const errBox = document.getElementById('authErrorMessage');
+            const btn = document.getElementById('btnSubmitAuth');
+
+            const email = (emailInp?.value || '').trim();
+            const password = (passInp?.value || '').trim();
+
+            if (!email || !password) {
+                if (errBox) {
+                    errBox.textContent = 'Por favor, informe seu e-mail e sua senha.';
+                    errBox.style.display = 'block';
+                }
+                return;
+            }
+
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Autenticando...';
+            if (errBox) errBox.style.display = 'none';
+
+            try {
+                const sbAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiYW5vbiIsImlzcyI6InN1cGFiYXNlIiwiaWF0IjoxNzkzNjA2MDMwLCJleHAiOjIxMDg5NjYwMzB9.dKJ7c9BPEa4fvplCGaXxBBhxH3IYiVqE1UGIAKRUvxQ';
+                const tokenRes = await fetch('https://db.ozpro.com.br/auth/v1/token?grant_type=password', {
+                    method: 'POST',
+                    headers: {
+                        'apikey': sbAnonKey,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ email, password })
+                });
+
+                if (!tokenRes.ok) {
+                    const errData = await tokenRes.json().catch(() => ({}));
+                    throw new Error(errData.error_description || errData.message || 'Credenciais inválidas. Verifique seu e-mail e senha.');
+                }
+
+                const tokenData = await tokenRes.json();
+                const user = tokenData.user || {};
+                const accessToken = tokenData.access_token || '';
+
+                // Busca dados da empresa do usuário na tabela users
+                let companyId = user.user_metadata?.company_id || user.app_metadata?.company_id || '';
+                try {
+                    const uRes = await fetch(`https://db.ozpro.com.br/rest/v1/users?email=ilike.${encodeURIComponent(email)}&limit=1`, {
+                        headers: {
+                            'apikey': sbAnonKey,
+                            'Authorization': `Bearer ${accessToken || sbAnonKey}`
+                        }
+                    });
+                    if (uRes.ok) {
+                        const uList = await uRes.json();
+                        if (uList && uList.length > 0 && uList[0].company_id) {
+                            companyId = uList[0].company_id;
+                        }
+                    }
+                } catch (_) {}
+
+                if (!companyId) {
+                    companyId = email.split('@')[0];
+                }
+
+                currentAuthToken = accessToken;
+                currentCompanyId = companyId;
+                currentUserEmail = email;
+
+                localStorage.setItem('ozpro_company_id', companyId);
+                localStorage.setItem('company_id', companyId);
+                localStorage.setItem('ozpro_user_email', email);
+                localStorage.setItem('sb-auth-token', accessToken);
+
+                // Salva token formatado para o client Supabase
+                const sbStorageKey = 'sb-db-auth-token';
+                localStorage.setItem(sbStorageKey, JSON.stringify(tokenData));
+
+                fecharModalLogin();
+                exibirToast(`Bem-vindo, ${email}! Tenant: ${companyId}`, 'fa-circle-check');
+
+                // Atualiza UI e recarrega histórico da empresa
+                initLumoState();
+                carregarHistoricoTenant();
+            } catch (err) {
+                if (errBox) {
+                    errBox.textContent = err.message || 'Erro ao autenticar. Tente novamente.';
+                    errBox.style.display = 'block';
+                }
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-right-to-bracket"></i> Entrar';
+            }
+        }
+
+        function desconectarContaHermes() {
+            if (!confirm('Deseja realmente desconectar desta sessão?')) return;
+            try {
+                localStorage.removeItem('ozpro_company_id');
+                localStorage.removeItem('company_id');
+                localStorage.removeItem('ozpro_user_email');
+                localStorage.removeItem('sb-auth-token');
+                const keys = Object.keys(localStorage);
+                keys.forEach(k => {
+                    if (k.startsWith('sb-') && k.endsWith('-auth-token')) {
+                        localStorage.removeItem(k);
+                    }
+                });
+            } catch (_) {}
+            window.location.reload();
+        }
+
+        // Sincronizador Seguro Cross-Domain (ai.ozpro.com.br -> ia.ozpro.com.br)
+        let _syncBridgeIframe = null;
+        function dispararSincronizacaoCrossDomain(manual) {
+            if (manual) {
+                exibirToast('Consultando conversas salvas no ai.ozpro.com.br...', 'fa-arrows-rotate');
+            }
+
+            if (!_syncBridgeIframe) {
+                _syncBridgeIframe = document.createElement('iframe');
+                _syncBridgeIframe.style.display = 'none';
+                _syncBridgeIframe.src = 'https://ai.ozpro.com.br/vault-bridge.html';
+                document.body.appendChild(_syncBridgeIframe);
+
+                _syncBridgeIframe.onload = function() {
+                    try {
+                        _syncBridgeIframe.contentWindow.postMessage({ action: 'get_vault' }, 'https://ai.ozpro.com.br');
+                    } catch (_) {}
+                };
+            } else {
+                try {
+                    _syncBridgeIframe.contentWindow.postMessage({ action: 'get_vault' }, 'https://ai.ozpro.com.br');
+                } catch (_) {}
+            }
+        }
+
+        window.addEventListener('message', function(e) {
+            if (e.origin !== 'https://ai.ozpro.com.br' && !e.origin.endsWith('.ozpro.com.br')) return;
+            if (e.data && e.data.action === 'vault_data') {
+                const data = e.data;
+                let importedCount = 0;
+
+                if (Array.isArray(data.chats) && data.chats.length > 0) {
+                    const targetTenant = data.tenant || currentCompanyId || 'diffstoregja322';
+                    const key = 'hermes_vault_chats_' + targetTenant;
+                    let existing = [];
+                    try { existing = JSON.parse(localStorage.getItem(key) || '[]'); } catch (_) {}
+                    const map = new Map();
+                    existing.forEach(c => map.set(c.id, c));
+                    data.chats.forEach(c => {
+                        if (!map.has(c.id)) {
+                            map.set(c.id, c);
+                            importedCount++;
+                        }
+                    });
+                    localStorage.setItem(key, JSON.stringify(Array.from(map.values())));
+                }
+
+                if (data.tenant && (!currentCompanyId || currentCompanyId === 'diffstoregja322')) {
+                    currentCompanyId = data.tenant;
+                    localStorage.setItem('ozpro_company_id', data.tenant);
+                }
+
+                if (data.email && (!currentUserEmail || currentUserEmail.endsWith('@ozpro.com.br'))) {
+                    currentUserEmail = data.email;
+                    localStorage.setItem('ozpro_user_email', data.email);
+                }
+
+                if (data.apiKey && !localStorage.getItem('omnirouter_api_key')) {
+                    localStorage.setItem('omnirouter_api_key', data.apiKey);
+                }
+
+                if (importedCount > 0) {
+                    exibirToast(`✨ ${importedCount} conversas migradas com sucesso do ai.ozpro.com.br!`, 'fa-circle-check');
+                    carregarHistoricoTenant();
+                } else if (_syncBridgeIframe && _syncBridgeIframe.__manualTrigger) {
+                    exibirToast('Nenhuma conversa pendente para sincronizar.', 'fa-circle-info');
+                }
+            }
+        });
+
+        // Auto-sincroniza no carregamento se o cofre estiver vazio no novo domínio
+        setTimeout(() => {
+            try {
+                const chats = TenantChatVault.getChats();
+                if (chats.length === 0 && window.location.hostname === 'ia.ozpro.com.br') {
+                    dispararSincronizacaoCrossDomain(false);
+                }
+            } catch (_) {}
+        }, 600);
+
+        // Histórico por Tenant (Híbrido Nuvem Supabase PostgreSQL + Vault Local Resiliente)
         async function carregarHistoricoTenant() {
             let remoteChats = [];
+            const effectiveTenant = currentCompanyId || 'diffstoregja322';
             try {
-                const res = await fetch(`/api/admin/hermes-chat?action=chats&company_id=${encodeURIComponent(currentCompanyId)}`, {
+                const res = await fetch(`/api/admin/hermes-chat?action=chats&company_id=${encodeURIComponent(effectiveTenant)}`, {
                     headers: {
                         'Authorization': `Bearer ${currentAuthToken}`,
-                        'x-company-id': currentCompanyId
+                        'x-company-id': effectiveTenant
                     }
                 });
                 if (res.ok) {
                     const data = await res.json();
                     if (data.companyId && data.companyId !== 'master' && data.companyId !== 'default') {
                         currentCompanyId = data.companyId;
-                        document.getElementById('tenantBadge').innerHTML = `<i class="fas fa-shield-halved"></i> Tenant: <strong>${escapeHtml(data.companyId)}</strong>`;
+                        const badge = document.getElementById('tenantBadge');
+                        if (badge) badge.innerHTML = `<i class="fas fa-shield-halved"></i> Tenant: <strong>${escapeHtml(data.companyId)}</strong>`;
                     }
                     if (Array.isArray(data.chats)) {
                         remoteChats = data.chats;
@@ -3386,42 +4348,304 @@
             const chatMap = new Map();
             localChats.forEach(c => chatMap.set(c.id, c));
             remoteChats.forEach(c => {
-                if (!chatMap.has(c.id)) chatMap.set(c.id, c);
+                if (!chatMap.has(c.id)) {
+                    chatMap.set(c.id, c);
+                } else {
+                    const existing = chatMap.get(c.id);
+                    if (typeof c.is_favorite === 'boolean') {
+                        existing.is_favorite = c.is_favorite;
+                        existing.isFavorite = c.is_favorite;
+                    }
+                }
             });
 
             const allChats = Array.from(chatMap.values()).sort((a, b) => new Date(b.updated_at || 0) - new Date(a.updated_at || 0));
 
-            const container = document.getElementById('sidebarRecentChats');
-            if (allChats.length > 0) {
-                container.innerHTML = allChats.map(c => `
-                    <div class="chat-list-item ${c.id === activeChatId ? 'active' : ''}" onclick="abrirChat('${c.id}')">
-                        <span class="item-text"><i class="fas fa-message" style="margin-right:6px;font-size:11px"></i>${escapeHtml(c.title)}</span>
+            // Salva de volta no vault local para que a sessão persista offline
+            try {
+                localStorage.setItem(TenantChatVault.getStorageKey(), JSON.stringify(allChats.slice(0, 150)));
+            } catch (_) {}
+
+            renderizarHistorico(allChats);
+        }
+
+        // Renderizador Oficial de Favoritos e Recentes
+        function renderizarHistorico(chatsToRender) {
+            const favContainer = document.getElementById('sidebarFavoritesList');
+            const recContainer = document.getElementById('sidebarRecentChats');
+            if (!favContainer || !recContainer) return;
+
+            const all = Array.isArray(chatsToRender) ? chatsToRender : [];
+            const favorites = all.filter(c => c.is_favorite || c.isFavorite);
+
+            // 1. Renderiza Favoritos
+            if (favorites.length > 0) {
+                favContainer.innerHTML = favorites.map(c => `
+                    <div class="chat-list-item ${c.id === activeChatId ? 'active' : ''}" onclick="abrirChat('${c.id}')" oncontextmenu="abrirMenuContextoChat(event, '${c.id}')" title="Clique para abrir • Botão direito para opções">
+                        <span class="item-text"><i class="fas fa-star" style="margin-right:6px;font-size:11px;color:#f59e0b"></i>${escapeHtml(c.title)}</span>
                         <div class="item-actions">
+                            <button class="btn-icon-subtle btn-star active" onclick="event.stopPropagation(); toggleFavoritoChat('${c.id}')" title="Desfavoritar"><i class="fas fa-star" style="color:#f59e0b;font-size:11px"></i></button>
                             <button class="btn-icon-subtle" onclick="event.stopPropagation(); excluirChat('${c.id}')" title="Excluir"><i class="fas fa-trash-can" style="font-size:10px"></i></button>
                         </div>
                     </div>
                 `).join('');
             } else {
-                container.innerHTML = `<div class="chat-list-empty">Nenhum histórico recente no tenant (${escapeHtml(currentCompanyId)}).</div>`;
+                favContainer.innerHTML = `<div class="chat-list-empty">Marque uma conversa com estrela para vê-la aqui.</div>`;
+            }
+
+            // 2. Renderiza Recentes
+            if (all.length > 0) {
+                recContainer.innerHTML = all.map(c => {
+                    const isFav = !!(c.is_favorite || c.isFavorite);
+                    return `
+                    <div class="chat-list-item ${c.id === activeChatId ? 'active' : ''}" onclick="abrirChat('${c.id}')" oncontextmenu="abrirMenuContextoChat(event, '${c.id}')" title="Clique para abrir • Botão direito para opções">
+                        <span class="item-text"><i class="fas fa-message" style="margin-right:6px;font-size:11px"></i>${escapeHtml(c.title)}</span>
+                        <div class="item-actions">
+                            <button class="btn-icon-subtle btn-star ${isFav ? 'active' : ''}" onclick="event.stopPropagation(); toggleFavoritoChat('${c.id}')" title="${isFav ? 'Desfavoritar' : 'Favoritar conversa'}">
+                                <i class="${isFav ? 'fas fa-star' : 'far fa-star'}" style="${isFav ? 'color:#f59e0b;' : ''}font-size:11px"></i>
+                            </button>
+                            <button class="btn-icon-subtle" onclick="event.stopPropagation(); excluirChat('${c.id}')" title="Excluir"><i class="fas fa-trash-can" style="font-size:10px"></i></button>
+                        </div>
+                    </div>
+                `;
+                }).join('');
+            } else {
+                recContainer.innerHTML = `<div class="chat-list-empty">Nenhum histórico recente no tenant (${escapeHtml(currentCompanyId || 'diffstoregja322')}).</div>`;
             }
         }
 
+        function toggleFavoritoChat(chatId) {
+            const isFav = TenantChatVault.toggleFavorite(chatId);
+            const allChats = TenantChatVault.getChats();
+            renderizarHistorico(allChats);
+            exibirToast(isFav ? 'Conversa adicionada aos Favoritos! ⭐' : 'Conversa removida dos Favoritos.', 'fa-star');
+        }
+
         function abrirPesquisaModal() {
-            const query = prompt('Pesquisar no histórico de conversas do seu tenant:');
-            if (query === null) return;
-            const q = query.toLowerCase().trim();
-            const chats = TenantChatVault.getChats();
-            const found = chats.filter(c => (c.title && c.title.toLowerCase().includes(q)) || (c.messages && c.messages.some(m => m.content && m.content.toLowerCase().includes(q))));
-            const container = document.getElementById('sidebarRecentChats');
-            if (found.length > 0) {
-                container.innerHTML = found.map(c => `
-                    <div class="chat-list-item ${c.id === activeChatId ? 'active' : ''}" onclick="abrirChat('${c.id}')">
-                        <span class="item-text"><i class="fas fa-search" style="margin-right:6px;font-size:11px;color:#38bdf8"></i>${escapeHtml(c.title)}</span>
-                    </div>
-                `).join('');
-            } else {
-                alert(`Nenhuma conversa encontrada com "${query}".`);
-                carregarHistoricoTenant();
+            const box = document.getElementById('sidebarSearchBox');
+            if (box) {
+                const isOpen = box.style.display !== 'none';
+                box.style.display = isOpen ? 'none' : 'block';
+                if (!isOpen) {
+                    const inp = document.getElementById('sidebarSearchInput');
+                    if (inp) { inp.value = ''; inp.focus(); }
+                } else {
+                    renderizarHistorico(TenantChatVault.getChats());
+                }
+            }
+        }
+
+        function fecharBuscaSidebar() {
+            const box = document.getElementById('sidebarSearchBox');
+            if (box) box.style.display = 'none';
+            renderizarHistorico(TenantChatVault.getChats());
+        }
+
+        function filtrarHistoricoSidebar(val) {
+            const q = (val || '').toLowerCase().trim();
+            const all = TenantChatVault.getChats();
+            if (!q) {
+                renderizarHistorico(all);
+                return;
+            }
+            const filtered = all.filter(c => (c.title && c.title.toLowerCase().includes(q)) || (c.messages && c.messages.some(m => m.content && m.content.toLowerCase().includes(q))));
+            renderizarHistorico(filtered);
+        }
+
+        // ==========================================================================
+        // MENU DE CONTEXTO DO BOTÃO DIREITO (MENSAGENS & CONVERSAS)
+        // ==========================================================================
+        let ctxTargetData = {
+            chatId: null,
+            messageId: null,
+            messageRole: null,
+            text: '',
+            targetElement: null
+        };
+
+        function fecharMenuContexto() {
+            const menu = document.getElementById('messageContextMenu');
+            if (menu) menu.style.display = 'none';
+        }
+
+        function posicionarMenuContexto(e) {
+            const menu = document.getElementById('messageContextMenu');
+            if (!menu) return;
+            menu.style.display = 'flex';
+            const menuWidth = 240;
+            const menuHeight = 290;
+            let x = e.clientX;
+            let y = e.clientY;
+            if (x + menuWidth > window.innerWidth) x = window.innerWidth - menuWidth - 12;
+            if (y + menuHeight > window.innerHeight) y = window.innerHeight - menuHeight - 12;
+            menu.style.left = `${Math.max(10, x)}px`;
+            menu.style.top = `${Math.max(10, y)}px`;
+        }
+
+        function abrirMenuContextoChat(e, chatId) {
+            e.preventDefault();
+            e.stopPropagation();
+            const chat = TenantChatVault.getChat(chatId);
+            if (!chat) return;
+
+            ctxTargetData = {
+                chatId: chatId,
+                messageId: null,
+                messageRole: null,
+                text: chat.title,
+                targetElement: e.currentTarget
+            };
+
+            const isFav = !!(chat.is_favorite || chat.isFavorite);
+            const favLabel = document.getElementById('ctxFavLabel');
+            if (favLabel) favLabel.textContent = isFav ? 'Remover dos Favoritos' : 'Favoritar Conversa ⭐';
+            const badge = document.getElementById('ctxBadge');
+            if (badge) badge.textContent = 'Conversa';
+            const btnRegenerar = document.getElementById('ctxBtnRegenerar');
+            if (btnRegenerar) btnRegenerar.style.display = 'none';
+
+            posicionarMenuContexto(e);
+        }
+
+        function initMessageContextMenu() {
+            const container = document.getElementById('chatFlowContainer');
+            if (!container) return;
+
+            container.addEventListener('contextmenu', (e) => {
+                const msgRow = e.target.closest('.msg-row');
+                if (!msgRow) return;
+
+                e.preventDefault();
+                e.stopPropagation();
+
+                const isAssistant = msgRow.classList.contains('assistant');
+                const textContent = msgRow.querySelector('.msg-text-content')?.innerText || 
+                                    msgRow.querySelector('.msg-bubble')?.innerText || '';
+
+                ctxTargetData = {
+                    chatId: activeChatId,
+                    messageId: msgRow.id || null,
+                    messageRole: isAssistant ? 'assistant' : 'user',
+                    text: textContent.trim(),
+                    targetElement: msgRow
+                };
+
+                const currentChat = activeChatId ? TenantChatVault.getChat(activeChatId) : null;
+                const isFav = !!(currentChat?.is_favorite || currentChat?.isFavorite);
+                const favLabel = document.getElementById('ctxFavLabel');
+                if (favLabel) favLabel.textContent = isFav ? 'Remover dos Favoritos' : 'Favoritar Conversa ⭐';
+                const badge = document.getElementById('ctxBadge');
+                if (badge) badge.textContent = isAssistant ? 'Hermes AI Resposta' : 'Sua Mensagem';
+                const btnRegenerar = document.getElementById('ctxBtnRegenerar');
+                if (btnRegenerar) btnRegenerar.style.display = isAssistant ? 'flex' : 'none';
+
+                posicionarMenuContexto(e);
+            });
+
+            document.addEventListener('click', (e) => {
+                if (!e.target.closest('#messageContextMenu')) fecharMenuContexto();
+            });
+
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') fecharMenuContexto();
+            });
+        }
+
+        function ctxActionFavoritarChat() {
+            fecharMenuContexto();
+            const targetId = ctxTargetData.chatId || activeChatId;
+            if (targetId) toggleFavoritoChat(targetId);
+        }
+
+        function ctxActionCopiarMensagem() {
+            fecharMenuContexto();
+            if (ctxTargetData.text) {
+                copiarTexto(ctxTargetData.text);
+            }
+        }
+
+        let pinnedMessageSnippet = '';
+        function ctxActionFixarMensagem() {
+            fecharMenuContexto();
+            const banner = document.getElementById('pinnedMessageBanner');
+            const textEl = document.getElementById('pinnedMessageText');
+            if (!banner || !textEl || !ctxTargetData.text) return;
+
+            pinnedMessageSnippet = ctxTargetData.text;
+            textEl.textContent = ctxTargetData.text.length > 90 ? ctxTargetData.text.slice(0, 90) + '...' : ctxTargetData.text;
+            banner.style.display = 'flex';
+            exibirToast('Mensagem fixada no topo do chat! 📌', 'fa-thumbtack');
+        }
+
+        function desafixarMensagem() {
+            const banner = document.getElementById('pinnedMessageBanner');
+            if (banner) banner.style.display = 'none';
+            pinnedMessageSnippet = '';
+        }
+
+        function rolarParaMensagemFixada() {
+            if (ctxTargetData.targetElement) {
+                ctxTargetData.targetElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                ctxTargetData.targetElement.style.transition = 'all 0.3s';
+                ctxTargetData.targetElement.style.background = 'rgba(168, 85, 247, 0.15)';
+                setTimeout(() => { ctxTargetData.targetElement.style.background = ''; }, 1500);
+            }
+        }
+
+        function ctxActionCitarMensagem() {
+            fecharMenuContexto();
+            const input = document.getElementById('chatInput');
+            if (!input || !ctxTargetData.text) return;
+            const quote = `> "${ctxTargetData.text.slice(0, 180)}..."\n\n`;
+            input.value = quote + input.value;
+            input.focus();
+            exibirToast('Mensagem citada no prompt! 💬', 'fa-quote-left');
+        }
+
+        function ctxActionRegenerar() {
+            fecharMenuContexto();
+            if (activeChatMessages.length >= 2) {
+                const lastUser = [...activeChatMessages].reverse().find(m => m.role === 'user');
+                if (lastUser) {
+                    regenerarMensagem(lastUser.content);
+                }
+            }
+        }
+
+        function ctxActionExportarMarkdown() {
+            fecharMenuContexto();
+            const targetId = ctxTargetData.chatId || activeChatId;
+            const chat = targetId ? TenantChatVault.getChat(targetId) : null;
+            if (!chat || !chat.messages || chat.messages.length === 0) {
+                exibirToast('Nenhuma mensagem para exportar.', 'fa-circle-exclamation');
+                return;
+            }
+
+            let md = `# Conversa Hermes AI Pro: ${chat.title || 'Sem título'}\n`;
+            md += `*Tenant:* ${currentCompanyId || 'diffstoregja322'} | *Data:* ${new Date(chat.updated_at || Date.now()).toLocaleString()}\n\n---\n\n`;
+            chat.messages.forEach(m => {
+                md += `### ${m.role === 'user' ? '👤 Usuário' : '🐱 Hermes AI Pro'}\n\n${m.content}\n\n---\n\n`;
+            });
+
+            const blob = new Blob([md], { type: 'text/markdown;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `hermes-chat-${(chat.title || 'export').replace(/[^a-zA-Z0-9_-]/g, '_')}.md`;
+            a.click();
+            URL.revokeObjectURL(url);
+            exibirToast('Chat exportado em Markdown! 📥', 'fa-file-arrow-down');
+        }
+
+        function ctxActionExcluirMensagem() {
+            fecharMenuContexto();
+            if (ctxTargetData.targetElement && ctxTargetData.targetElement.classList.contains('msg-row')) {
+                if (confirm('Deseja remover esta mensagem do fluxo atual?')) {
+                    ctxTargetData.targetElement.remove();
+                    exibirToast('Mensagem removida do visualizador.', 'fa-trash-can');
+                }
+            } else if (ctxTargetData.chatId) {
+                excluirChat(ctxTargetData.chatId);
             }
         }
 
@@ -3503,6 +4727,7 @@
         function iniciarNovoChat() {
             activeChatId = null;
             activeChatMessages = [];
+            desafixarMensagem();
             document.getElementById('chatFlowContainer').innerHTML = '';
             document.getElementById('chatFlowContainer').style.display = 'none';
             document.getElementById('heroWelcomeView').style.display = 'flex';
@@ -3521,7 +4746,10 @@
                     });
                     if (res.ok) {
                         const data = await res.json();
-                        if (data.chat) chat = data.chat;
+                        if (data.chat) {
+                            chat = data.chat;
+                            TenantChatVault.saveChat(chat);
+                        }
                     }
                 } catch (_) {}
             }
@@ -3581,8 +4809,8 @@
                     <div class="assistant-avatar-badge"><i class="fas fa-cat"></i></div>
                 </div>
                 <div class="msg-content-col">
-                    <div class="msg-bubble assistant-bubble">
-                        <div class="msg-text-content">${formatMarkdownWithCodeBlocks(text)}</div>
+                    <div class="msg-bubble assistant-bubble" id="bubble-${msgId}">
+                        <div class="msg-text-content" id="content-${msgId}">${formatMarkdownWithCodeBlocks(text, msgId)}</div>
                     </div>
                     <div class="msg-actions-toolbar" style="display:flex">
                         <button class="msg-tool-btn" onclick="copiarTexto('${escapeAttr(text)}')"><i class="fas fa-copy"></i> Copiar</button>
@@ -3594,6 +4822,7 @@
             `;
             container.appendChild(row);
             scrollChatToBottom();
+            renderLiveVarsEditor(msgId, text);
         }
 
         function toggleThinking(requestId) {
@@ -3610,13 +4839,133 @@
                 // ==========================================================================
         // PARSER AVANÇADO DE CONTEÚDO (ETAPAS CLICÁVEIS, TABELAS GLASS, IMAGENS IA)
         // ==========================================================================
+        const activeMessageTemplates = {};
+        const activeMessageValues = {};
+
         function toggleStepAccordion(accId) {
             const card = document.getElementById(accId);
             if (!card) return;
-            card.classList.toggle('collapsed');
+            const isCollapsed = card.classList.toggle('collapsed');
             const hint = document.getElementById('hint-' + accId);
             if (hint) {
-                hint.textContent = card.classList.contains('collapsed') ? 'Expandir' : 'Recolher';
+                hint.textContent = isCollapsed ? 'Expandir' : 'Recolher';
+            }
+            const arrow = document.getElementById('arrow-' + accId);
+            if (arrow) {
+                arrow.style.transform = isCollapsed ? 'rotate(-90deg)' : 'rotate(0deg)';
+            }
+        }
+
+        function extractPlaceholdersFromText(text) {
+            if (!text) return [];
+            const matches = text.match(/\{\{([a-zA-Z0-9_ -]+)\}\}/g);
+            if (!matches) return [];
+            const set = new Set();
+            matches.forEach(m => {
+                const k = m.replace(/[{}]/g, '').trim();
+                if (k) set.add(k);
+            });
+            return Array.from(set);
+        }
+
+        function renderLiveVarsEditor(requestId, fullText) {
+            const keys = extractPlaceholdersFromText(fullText);
+            if (keys.length === 0) return;
+
+            activeMessageTemplates[requestId] = fullText;
+            if (!activeMessageValues[requestId]) activeMessageValues[requestId] = {};
+
+            const bubble = document.getElementById(`bubble-${requestId}`) || document.getElementById(`content-${requestId}`)?.parentElement;
+            if (!bubble) return;
+
+            const existing = document.getElementById(`live-editor-${requestId}`);
+            if (existing) existing.remove();
+
+            const editorDiv = document.createElement('div');
+            editorDiv.className = 'live-vars-editor';
+            editorDiv.id = `live-editor-${requestId}`;
+
+            const fieldsHtml = keys.map(k => {
+                const prettyLabel = k.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                const currentVal = activeMessageValues[requestId][k] || '';
+                return `
+                    <div class="live-var-field">
+                        <label class="live-var-label" for="inp_${requestId}_${k}">
+                            <i class="fas fa-pen-clip"></i> ${escapeHtml(prettyLabel)}
+                        </label>
+                        <input type="text" 
+                               class="live-var-input" 
+                               id="inp_${requestId}_${k}" 
+                               placeholder="${escapeHtml(k)}" 
+                               value="${escapeAttr(currentVal)}"
+                               data-req="${requestId}" 
+                               data-key="${k}" 
+                               oninput="atualizarVariavelEmTempoReal('${requestId}', '${k}', this.value)">
+                    </div>
+                `;
+            }).join('');
+
+            editorDiv.innerHTML = `
+                <div class="live-vars-header">
+                    <div class="live-vars-title">
+                        <i class="fas fa-sliders" style="color:#818cf8"></i>
+                        <span>Preencher em Tempo Real</span>
+                        <span class="live-vars-count">${keys.length} ${keys.length === 1 ? 'campo' : 'campos'}</span>
+                    </div>
+                    <button class="btn-copy-live-ready" onclick="copiarMensagemPersonalizada('${requestId}')" title="Copiar mensagem já com os dados preenchidos">
+                        <i class="fas fa-copy"></i> Copiar Mensagem Pronta
+                    </button>
+                </div>
+                <div class="live-vars-grid">
+                    ${fieldsHtml}
+                </div>
+            `;
+
+            bubble.appendChild(editorDiv);
+        }
+
+        function atualizarVariavelEmTempoReal(requestId, key, val) {
+            if (!activeMessageValues[requestId]) activeMessageValues[requestId] = {};
+            activeMessageValues[requestId][key] = val;
+
+            const container = document.getElementById(`content-${requestId}`) || document.getElementById(`bubble-${requestId}`);
+            if (!container) return;
+
+            const pills = container.querySelectorAll(`.live-var-pill[data-var-key="${key}"]`);
+            pills.forEach(pill => {
+                if (val && val.trim() !== '') {
+                    pill.classList.add('filled');
+                    pill.innerHTML = `<i class="fas fa-check" style="font-size:9.5px;margin-right:3px"></i>${escapeHtml(val)}`;
+                } else {
+                    pill.classList.remove('filled');
+                    pill.innerHTML = `<i class="fas fa-pen-to-square" style="font-size:9.5px;margin-right:3px;opacity:0.7"></i>{{${escapeHtml(key)}}}`;
+                }
+            });
+        }
+
+        function focarVariavelChat(requestId, key) {
+            const inp = document.getElementById(`inp_${requestId}_${key}`);
+            if (inp) {
+                inp.focus();
+                inp.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                inp.classList.add('highlight-glow');
+                setTimeout(() => inp.classList.remove('highlight-glow'), 1200);
+            }
+        }
+
+        function copiarMensagemPersonalizada(requestId) {
+            const rawTemplate = activeMessageTemplates[requestId];
+            if (!rawTemplate) return;
+
+            const values = activeMessageValues[requestId] || {};
+            let filled = rawTemplate.replace(/\{\{([a-zA-Z0-9_ -]+)\}\}/g, (m, varKey) => {
+                const k = varKey.trim();
+                return (values[k] !== undefined && values[k] !== '') ? values[k] : m;
+            });
+
+            if (navigator.clipboard) {
+                navigator.clipboard.writeText(filled);
+                exibirToast('Mensagem personalizada copiada com sucesso para o WhatsApp!', 'fa-check');
             }
         }
 
@@ -3676,37 +5025,120 @@
             out = out.replace(/(?:^|\n)\s*(-{3,}|\*{3,})\s*(?:\n|$)/g, '\n<div class="lumo-divider"><span class="lumo-divider-glow"></span></div>\n');
 
             // 5. Títulos ### e #### convertidos em Accordions Clicáveis com Setinha
-            out = out.replace(/(?:^|\n)(#{2,4})\s+([^\n]+)([\s\S]*?)(?=(?:\n#{2,4}\s+|\n<div class="lumo-divider"|\n\s*(?:-{3,}|\*{3,})|$))/g, (match, hashes, title, content) => {
+            out = out.replace(/(?:^|\n)(#{2,4})\s+([^\n]+)([\s\S]*?)(?=(?:\n#{2,4}\s+|\n\d+\.\s+|\n<div class="lumo-divider"|\n\s*(?:-{3,}|\*{3,})|$))/g, (match, hashes, title, content) => {
                 const cleanTitle = title.trim();
                 const cleanContent = content.trim();
                 const safeSlug = cleanTitle.toLowerCase().replace(/[^a-z0-9]/g, '_').slice(0, 20);
                 const accId = `acc_${baseId}_${safeSlug}_${counter++}`;
 
                 if (!cleanContent) {
-                    return `\n<div class="step-accordion-card open" id="${accId}"><div class="step-accordion-header"><div class="step-accordion-title"><span class="step-icon-badge"><i class="fas fa-sparkles"></i></span><span class="step-heading-text">${escapeHtml(cleanTitle)}</span></div></div></div>\n`;
+                    return `\n<div class="step-accordion-card open" id="${accId}"><div class="step-accordion-header" onclick="toggleStepAccordion('${accId}')"><div class="step-accordion-title"><span class="step-icon-badge"><i class="fas fa-sparkles"></i></span><span class="step-heading-text">${escapeHtml(cleanTitle)}</span></div><div class="step-accordion-action"><span class="step-collapse-hint" id="hint-${accId}">Recolher</span><i class="fas fa-chevron-down step-arrow-icon" id="arrow-${accId}"></i></div></div></div>\n`;
                 }
 
                 return `\n<div class="step-accordion-card open" id="${accId}"><div class="step-accordion-header" onclick="toggleStepAccordion('${accId}')"><div class="step-accordion-title"><span class="step-icon-badge"><i class="fas fa-lightbulb"></i></span><span class="step-heading-text">${escapeHtml(cleanTitle)}</span></div><div class="step-accordion-action"><span class="step-collapse-hint" id="hint-${accId}">Recolher</span><i class="fas fa-chevron-down step-arrow-icon" id="arrow-${accId}"></i></div></div><div class="step-accordion-body" id="body-${accId}">\n${cleanContent}\n</div></div>\n`;
             });
 
-            // 6. Etapas Numeradas (Ex: "4. Cobertura (ganache de chocolate):" ou "5. Servir:")
-            out = out.replace(/(?:^|\n)(\d+)\.\s+([^\n:]+:?)([\s\S]*?)(?=(?:\n\d+\.\s+|\n<div class="step-accordion-card"|\n<div class="lumo-divider"|\n#{2,4}\s+|$))/g, (match, num, title, content) => {
-                const cleanTitle = title.replace(/:$/, '').trim();
-                const cleanContent = content.trim();
-                const stepId = `step_${baseId}_${num}_${counter++}`;
+            // 6. Blocos de Etapas Numeradas — Tabela Obsidian Glass Elegante (Estilo Como Usar / Dicas de Uso)
+            out = out.replace(/(?:^|\n)((?:(?:\d+)\.\s+[^\n]+(?:\r?\n|$)){2,})/g, (match, stepsBlock) => {
+                const lines = stepsBlock.trim().split(/\r?\n/).map(l => l.trim()).filter(l => /^\d+\.\s+/.test(l));
+                if (lines.length < 2) return match;
 
-                if (!cleanContent) {
-                    return `\n<div class="step-accordion-card step-numbered open" id="${stepId}"><div class="step-accordion-header"><div class="step-accordion-title"><span class="step-number-badge">Etapa ${num}</span><span class="step-heading-text">${escapeHtml(cleanTitle)}</span></div></div></div>\n`;
-                }
+                let rowsHtml = '';
+                lines.forEach(line => {
+                    const m = line.match(/^(\d+)\.\s+(.*)$/);
+                    if (!m) return;
+                    const num = m[1];
+                    const content = m[2].trim();
 
-                return `\n<div class="step-accordion-card step-numbered open" id="${stepId}"><div class="step-accordion-header" onclick="toggleStepAccordion('${stepId}')"><div class="step-accordion-title"><span class="step-number-badge">Etapa ${num}</span><span class="step-heading-text">${escapeHtml(cleanTitle)}</span></div><div class="step-accordion-action"><span class="step-collapse-hint" id="hint-${stepId}">Recolher</span><i class="fas fa-chevron-down step-arrow-icon" id="arrow-${stepId}"></i></div></div><div class="step-accordion-body" id="body-${stepId}">\n${cleanContent}\n</div></div>\n`;
+                    let stepTitle = '';
+                    let stepDesc = content;
+
+                    const boldMatch = content.match(/^\*\*([^\*]+)\*\*[:\s-]*(.*)$/);
+                    const colonIdx = content.indexOf(':');
+                    const dashIdx = content.indexOf(' - ');
+
+                    if (boldMatch) {
+                        stepTitle = boldMatch[1].trim();
+                        stepDesc = boldMatch[2].trim();
+                    } else if (colonIdx > 0 && colonIdx < 35) {
+                        stepTitle = content.slice(0, colonIdx).trim();
+                        stepDesc = content.slice(colonIdx + 1).trim();
+                    } else if (dashIdx > 0 && dashIdx < 35) {
+                        stepTitle = content.slice(0, dashIdx).trim();
+                        stepDesc = content.slice(dashIdx + 3).trim();
+                    } else {
+                        const words = content.split(' ');
+                        if (words.length > 3) {
+                            stepTitle = words.slice(0, 2).join(' ');
+                            stepDesc = words.slice(2).join(' ');
+                        } else {
+                            stepTitle = content;
+                            stepDesc = '';
+                        }
+                    }
+
+                    rowsHtml += `<tr>
+                        <td style="width:160px;min-width:140px;font-weight:700;color:#c4b5fd;vertical-align:top;white-space:nowrap">
+                            ${num}. ${escapeHtml(stepTitle)}
+                        </td>
+                        <td style="line-height:1.55;color:#e2e8f0;vertical-align:top">
+                            ${stepDesc ? escapeHtml(stepDesc) : escapeHtml(content)}
+                        </td>
+                    </tr>`;
+                });
+
+                const tableCardId = `steps_tbl_${baseId}_${counter++}`;
+                return `\n<div class="step-accordion-card open" id="${tableCardId}">
+                    <div class="step-accordion-header" onclick="toggleStepAccordion('${tableCardId}')">
+                        <div class="step-accordion-title">
+                            <span class="step-icon-badge"><i class="fas fa-lightbulb"></i></span>
+                            <span class="step-heading-text">Como usar</span>
+                        </div>
+                        <div class="step-accordion-action">
+                            <span class="step-collapse-hint" id="hint-${tableCardId}">Recolher</span>
+                            <i class="fas fa-chevron-down step-arrow-icon" id="arrow-${tableCardId}"></i>
+                        </div>
+                    </div>
+                    <div class="step-accordion-body" id="body-${tableCardId}">
+                        <div class="lumo-table-container">
+                            <table class="lumo-glass-table">
+                                <thead>
+                                    <tr>
+                                        <th style="width:160px">Etapa</th>
+                                        <th>O que fazer</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${rowsHtml}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>\n`;
             });
 
-            // 7. Listas e Bullets
+            // 7. Placeholders / Variáveis dinâmicas em sintaxe {{nome_campo}}
+            out = out.replace(/\{\{([a-zA-Z0-9_ -]*)\}\}/g, (m, varKey) => {
+                const k = varKey.trim();
+                if (!k) return `<span class="live-var-pill" style="opacity:0.85"><i class="fas fa-brackets-curly" style="font-size:9px;margin-right:2px"></i>{{ }}</span>`;
+                return `<span class="live-var-pill" data-var-key="${escapeAttr(k)}" onclick="focarVariavelChat('${baseId}', '${escapeAttr(k)}')" title="Clique para editar este campo em tempo real"><i class="fas fa-pen-to-square" style="font-size:9.5px;margin-right:3px;opacity:0.7"></i>{{${escapeHtml(k)}}}</span>`;
+            });
+
+            // 8. Realce de Moeda (R$ 150,00 ou R$ {{valor}})
+            out = out.replace(/\b(R\$\s*[\d\.,]+(?:\s*(?:mil|milhões|bi))?)\b/g, '<span class="lumo-highlight-badge badge-currency"><i class="fas fa-brazilian-real-sign" style="font-size:10px"></i>$1</span>');
+
+            // 9. Realce de Prazos e Horários
+            out = out.replace(/\b(\d+\s*(?:dias|horas|semanas|meses|minutos|min|h))\b/gi, '<span class="lumo-highlight-badge badge-time"><i class="far fa-clock" style="font-size:10px"></i>$1</span>');
+            out = out.replace(/\b(entre\s+\d+h\s+e\s+\d+h)\b/gi, '<span class="lumo-highlight-badge badge-time"><i class="far fa-clock" style="font-size:10px"></i>$1</span>');
+
+            // 10. Realce de Formas de Pagamento & Canais
+            out = out.replace(/\b(PIX|Pix|Boleto|Cartão|Link para pagamento|chave pix|qr code)\b/gi, '<span class="lumo-highlight-badge badge-tag">$1</span>');
+
+            // 11. Listas e Bullets
             out = out.replace(/^\s*[•\-\*]\s+(.*)$/gim, '<div class="lumo-list-item"><span class="lumo-bullet-dot"></span><span>$1</span></div>');
 
-            // 8. Negrito e Itálico
-            out = out.replace(/\*\*([^*]+)\*\*/g, '<strong style="color:#fff;font-weight:700">$1</strong>');
+            // 12. Negrito com destaque luminoso e Itálico
+            out = out.replace(/\*\*([^*]+)\*\*/g, '<strong class="lumo-strong-highlight">$1</strong>');
             out = out.replace(/\*([^*]+)\*/g, '<em style="color:#cbd5e1">$1</em>');
 
             // 9. Código Inline
@@ -3884,44 +5316,224 @@
             }
         }
 
+        // ─── WORKSPACE CANVAS: REDIMENSIONÁVEL COM LIVE PREVIEW SANDBOX ───
+        let currentCanvasCode = '';
+        let currentCanvasLang = 'html';
+        let canvasWidth = 580;
+        let isDraggingResizer = false;
+
+        function toggleCanvasWorkspace(forcedOpen = null) {
+            const pane = document.getElementById('canvasWorkspacePane');
+            const resizer = document.getElementById('canvasResizerHandle');
+            if (!pane) return;
+
+            const shouldOpen = forcedOpen !== null ? forcedOpen : !pane.classList.contains('active');
+
+            if (shouldOpen) {
+                pane.classList.add('active');
+                if (resizer) resizer.classList.add('active');
+                pane.style.width = canvasWidth + 'px';
+                if (!currentCanvasCode && lastGeneratedCode) {
+                    carregarCodigoNoCanvas(lastGeneratedCode, 'html');
+                }
+            } else {
+                pane.classList.remove('active');
+                if (resizer) resizer.classList.remove('active');
+                pane.style.width = '0px';
+            }
+        }
+
+        function initCanvasResizer() {
+            const resizer = document.getElementById('canvasResizerHandle');
+            const pane = document.getElementById('canvasWorkspacePane');
+            if (!resizer || !pane) return;
+
+            let startX = 0;
+            let startWidth = 0;
+
+            function onPointerDown(e) {
+                isDraggingResizer = true;
+                startX = e.clientX || (e.touches && e.touches[0].clientX);
+                startWidth = pane.getBoundingClientRect().width;
+                resizer.classList.add('dragging');
+                pane.classList.add('resizing');
+                document.body.style.cursor = 'col-resize';
+                document.body.style.userSelect = 'none';
+
+                window.addEventListener('mousemove', onPointerMove);
+                window.addEventListener('touchmove', onPointerMove, { passive: false });
+                window.addEventListener('mouseup', onPointerUp);
+                window.addEventListener('touchend', onPointerUp);
+            }
+
+            function onPointerMove(e) {
+                if (!isDraggingResizer) return;
+                const currentX = e.clientX || (e.touches && e.touches[0].clientX);
+                if (!currentX) return;
+                if (e.cancelable) e.preventDefault();
+
+                const delta = startX - currentX;
+                let newWidth = startWidth + delta;
+
+                const minWidth = 320;
+                const maxWidth = Math.max(minWidth, window.innerWidth - 320);
+
+                if (newWidth < minWidth) newWidth = minWidth;
+                if (newWidth > maxWidth) newWidth = maxWidth;
+
+                canvasWidth = Math.round(newWidth);
+                pane.style.width = canvasWidth + 'px';
+            }
+
+            function onPointerUp() {
+                if (!isDraggingResizer) return;
+                isDraggingResizer = false;
+                resizer.classList.remove('dragging');
+                pane.classList.remove('resizing');
+                document.body.style.cursor = '';
+                document.body.style.userSelect = '';
+
+                window.removeEventListener('mousemove', onPointerMove);
+                window.removeEventListener('touchmove', onPointerMove);
+                window.removeEventListener('mouseup', onPointerUp);
+                window.removeEventListener('touchend', onPointerUp);
+            }
+
+            resizer.addEventListener('mousedown', onPointerDown);
+            resizer.addEventListener('touchstart', onPointerDown, { passive: false });
+
+            // Duplo clique na barra reseta para 50% de divisão de tela
+            resizer.addEventListener('dblclick', () => {
+                setCanvasWidthPreset('half');
+            });
+        }
+
+        function setCanvasWidthPreset(preset) {
+            const pane = document.getElementById('canvasWorkspacePane');
+            if (!pane) return;
+
+            const screenW = window.innerWidth;
+            if (preset === 'mobile') {
+                canvasWidth = 390;
+            } else if (preset === 'tablet') {
+                canvasWidth = Math.min(768, Math.round(screenW * 0.7));
+            } else if (preset === 'half') {
+                canvasWidth = Math.round(screenW * 0.5);
+            } else if (preset === 'full') {
+                canvasWidth = Math.round(screenW * 0.88);
+            }
+
+            pane.classList.remove('resizing');
+            pane.style.width = canvasWidth + 'px';
+            toggleCanvasWorkspace(true);
+        }
+
+        function switchCanvasTab(tab) {
+            const previewView = document.getElementById('canvasPreviewView');
+            const codeView = document.getElementById('canvasCodeView');
+            const tabPrev = document.getElementById('tabCanvasPreview');
+            const tabCode = document.getElementById('tabCanvasCode');
+
+            if (tab === 'preview') {
+                if (previewView) previewView.style.display = 'flex';
+                if (codeView) codeView.style.display = 'none';
+                if (tabPrev) tabPrev.classList.add('active');
+                if (tabCode) tabCode.classList.remove('active');
+            } else {
+                if (previewView) previewView.style.display = 'none';
+                if (codeView) codeView.style.display = 'flex';
+                if (tabPrev) tabPrev.classList.remove('active');
+                if (tabCode) tabCode.classList.add('active');
+            }
+        }
+
+        function carregarCodigoNoCanvas(rawCode, lang = 'html') {
+            currentCanvasCode = rawCode || '';
+            currentCanvasLang = (lang || 'html').toLowerCase();
+
+            // Atualiza aba de código
+            const codeEl = document.querySelector('#canvasCodePre code');
+            if (codeEl) codeEl.textContent = currentCanvasCode;
+            const statsBadge = document.getElementById('canvasCodeStatsBadge');
+            if (statsBadge) statsBadge.innerHTML = `<i class="fas fa-code"></i> ${currentCanvasLang.toUpperCase()} • ${currentCanvasCode.split('\n').length} linhas`;
+            const langLabel = document.getElementById('canvasLangLabel');
+            if (langLabel) langLabel.textContent = currentCanvasLang.toUpperCase();
+
+            // Prepara preview interativo executável
+            let executableHtml = currentCanvasCode;
+            const isHtmlOrWeb = currentCanvasLang === 'html' || currentCanvasLang === 'xml' || currentCanvasLang === 'svg' || currentCanvasCode.includes('<!DOCTYPE') || currentCanvasCode.includes('<html') || currentCanvasCode.includes('<div') || currentCanvasCode.includes('<canvas') || currentCanvasCode.includes('<script') || currentCanvasCode.includes('<style');
+
+            if (!isHtmlOrWeb) {
+                if (currentCanvasLang === 'javascript' || currentCanvasLang === 'js') {
+                    executableHtml = `<!DOCTYPE html><html><head><meta charset="utf-8"><style>body{font-family:sans-serif;padding:24px;background:#0b101c;color:#f8fafc;}</style></head><body><div id="app"></div><scr` + `ipt>${currentCanvasCode}</scr` + `ipt></body></html>`;
+                } else {
+                    // Linguagem backend (SQL, Rust, Python) -> foca direto na aba de código
+                    switchCanvasTab('code');
+                    toggleCanvasWorkspace(true);
+                    return;
+                }
+            }
+
+            const iframe = document.getElementById('canvasPreviewIframe');
+            if (iframe) {
+                iframe.srcdoc = executableHtml;
+            }
+
+            switchCanvasTab('preview');
+            toggleCanvasWorkspace(true);
+        }
+
         function abrirCodigoCanvas(button) {
             const card = button.closest('.code-block-card');
             const codeEl = card.querySelector('code');
             const langEl = card.querySelector('.code-lang-tag');
             if (codeEl) {
                 const codeText = codeEl.textContent || codeEl.innerText;
-                const lang = langEl ? langEl.textContent : 'CÓDIGO';
-                const canvasBody = document.getElementById('canvasBodyContent');
-                canvasBody.innerHTML = `
-                    <div style="display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(255,255,255,0.08);padding-bottom:10px">
-                        <span style="font-size:12px;font-weight:700;color:#c4b5fd"><i class="fas fa-code"></i> ${lang}</span>
-                        <button class="btn-code-action" onclick="baixarArquivoCanvas('${lang.toLowerCase()}')"><i class="fas fa-download"></i> Baixar Arquivo</button>
-                    </div>
-                    <pre class="canvas-code-container">${escapeHtml(codeText)}</pre>
-                `;
-                document.getElementById('canvasWorkspacePane').classList.add('active');
+                const lang = langEl ? langEl.textContent.toLowerCase() : 'html';
+                carregarCodigoNoCanvas(codeText, lang);
+            }
+        }
+
+        function recarregarPreviewCanvas() {
+            if (currentCanvasCode) {
+                const iframe = document.getElementById('canvasPreviewIframe');
+                if (iframe) {
+                    const doc = iframe.srcdoc;
+                    iframe.srcdoc = '';
+                    setTimeout(() => { iframe.srcdoc = doc; }, 40);
+                    exibirToast('Preview recarregado com sucesso!', 'fa-rotate-right');
+                }
+            }
+        }
+
+        function abrirPreviewNovaAba() {
+            if (!currentCanvasCode) return;
+            const win = window.open();
+            if (win) {
+                win.document.open();
+                win.document.write(currentCanvasCode);
+                win.document.close();
             }
         }
 
         function copiarConteudoCanvas() {
-            const container = document.querySelector('.canvas-code-container');
-            if (container) {
-                navigator.clipboard.writeText(container.textContent).then(() => {
-                    alert('Código do Canvas copiado com sucesso!');
+            if (currentCanvasCode) {
+                navigator.clipboard.writeText(currentCanvasCode).then(() => {
+                    exibirToast('Código do Canvas copiado com sucesso!', 'fa-check');
                 });
             }
         }
 
-        function baixarArquivoCanvas(ext) {
-            const container = document.querySelector('.canvas-code-container');
-            if (!container) return;
-            const text = container.textContent;
-            const extension = ext.includes('sql') ? 'sql' : ext.includes('ts') ? 'ts' : ext.includes('py') ? 'py' : 'txt';
-            const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
-            const link = document.createElement('a');
-            link.href = URL.createObjectURL(blob);
-            link.download = `codigo-hermes-${Date.now()}.${extension}`;
-            link.click();
+        function baixarArquivoCanvasAtual() {
+            if (!currentCanvasCode) return;
+            const ext = currentCanvasLang.includes('js') ? 'js' : (currentCanvasLang.includes('html') ? 'html' : (currentCanvasLang.includes('css') ? 'css' : (currentCanvasLang.includes('sql') ? 'sql' : 'txt')));
+            const blob = new Blob([currentCanvasCode], { type: 'text/plain;charset=utf-8' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = `hermes-app-${Date.now()}.${ext}`;
+            a.click();
+            URL.revokeObjectURL(a.href);
+            exibirToast(`Arquivo hermes-app.${ext} baixado com sucesso!`, 'fa-download');
         }
 
         function copiarTexto(txt) {
@@ -4014,9 +5626,33 @@
             const flowContainer = document.getElementById('chatFlowContainer');
             flowContainer.style.display = 'flex';
 
+            // Salva no histórico de navegação com Setas
+            if (text) {
+                if (chatInputHistory.length === 0 || chatInputHistory[chatInputHistory.length - 1] !== text) {
+                    chatInputHistory.push(text);
+                    if (chatInputHistory.length > 50) chatInputHistory.shift();
+                    try { localStorage.setItem('hermes_input_history', JSON.stringify(chatInputHistory)); } catch (_) {}
+                }
+                chatInputHistoryIndex = -1;
+                chatInputDraft = '';
+            }
+
             // 1. Adiciona à lista de contexto multi-turn e renderiza mensagem com print
             activeChatMessages.push({ role: 'user', content: text, ...(imageToSend ? { image: imageToSend } : {}) });
             appendUserMessage(text, imageToSend);
+
+            // Prevenção Ativa Zero Data Loss: salva imediatamente a mensagem do usuário no cofre
+            if (!isIncognito) {
+                activeChatId = activeChatId || ('chat_' + Date.now() + '_' + Math.random().toString(36).substring(2, 7));
+                TenantChatVault.saveChat({
+                    id: activeChatId,
+                    title: text.slice(0, 40) || 'Nova Conversa',
+                    model: (document.getElementById('modelSelect')?.value) || 'Hermes AI Pro',
+                    messages: activeChatMessages,
+                    updated_at: new Date().toISOString()
+                });
+                renderizarHistorico(TenantChatVault.getChats());
+            }
 
             // 2. Prepara estado de geração & Botão de Parada
             isGenerating = true;
@@ -4172,6 +5808,7 @@
                         model: model,
                         chatId: isIncognito ? null : activeChatId,
                         isIncognito: isIncognito,
+                        memoriesEnabled: document.getElementById('toggleMemories') ? document.getElementById('toggleMemories').checked : true,
                         history: historyToSend
                     }),
                     signal: currentAbortController.signal
@@ -4242,15 +5879,9 @@
                     if (btnCanvas) {
                         btnCanvas.onclick = () => {
                             if (lastGeneratedCode) {
-                                const canvasBody = document.getElementById('canvasBodyContent');
-                                canvasBody.innerHTML = `
-                                    <div style="display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(255,255,255,0.08);padding-bottom:10px">
-                                        <span style="font-size:12px;font-weight:700;color:#c4b5fd"><i class="fas fa-code"></i> Código do Projeto</span>
-                                        <button class="btn-code-action" onclick="baixarArquivoCanvas('sql')"><i class="fas fa-download"></i> Baixar Arquivo</button>
-                                    </div>
-                                    <pre class="canvas-code-container">${escapeHtml(lastGeneratedCode)}</pre>
-                                `;
-                                document.getElementById('canvasWorkspacePane').classList.add('active');
+                                carregarCodigoNoCanvas(lastGeneratedCode, 'html');
+                            } else {
+                                toggleCanvasWorkspace(true);
                             }
                         };
                     }
@@ -4307,8 +5938,9 @@
             }
 
             if (cursor) cursor.style.display = 'none';
-            content.innerHTML = formatMarkdownWithCodeBlocks(fullText);
+            content.innerHTML = formatMarkdownWithCodeBlocks(fullText, requestId);
             scrollChatToBottom();
+            renderLiveVarsEditor(requestId, fullText);
         }
 
         function regenerarMensagem(originalPrompt) {
@@ -4368,15 +6000,168 @@
             this.style.height = Math.min(this.scrollHeight, 180) + 'px';
         });
 
+        // ─── HISTÓRICO DE MENSAGENS COM SETA PARA CIMA E PARA BAIXO ───
+        let chatInputHistory = [];
+        let chatInputHistoryIndex = -1;
+        let chatInputDraft = '';
+
+        try {
+            const savedHistory = localStorage.getItem('hermes_input_history');
+            if (savedHistory) chatInputHistory = JSON.parse(savedHistory);
+        } catch (_) {}
+
         textarea.addEventListener('keydown', (e) => {
             if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault();
                 handleSendOrStop();
+            } else if (e.key === 'ArrowUp') {
+                const isAtStart = textarea.selectionStart === 0 && textarea.selectionEnd === 0;
+                if ((textarea.value.trim() === '' || isAtStart || chatInputHistoryIndex >= 0) && chatInputHistory.length > 0) {
+                    e.preventDefault();
+                    if (chatInputHistoryIndex === -1) {
+                        chatInputDraft = textarea.value;
+                    }
+                    if (chatInputHistoryIndex < chatInputHistory.length - 1) {
+                        chatInputHistoryIndex++;
+                        textarea.value = chatInputHistory[chatInputHistory.length - 1 - chatInputHistoryIndex];
+                        textarea.style.height = 'auto';
+                        textarea.style.height = Math.min(textarea.scrollHeight, 180) + 'px';
+                        textarea.selectionStart = textarea.selectionEnd = textarea.value.length;
+                    }
+                }
+            } else if (e.key === 'ArrowDown') {
+                if (chatInputHistoryIndex >= 0) {
+                    e.preventDefault();
+                    chatInputHistoryIndex--;
+                    if (chatInputHistoryIndex >= 0) {
+                        textarea.value = chatInputHistory[chatInputHistory.length - 1 - chatInputHistoryIndex];
+                    } else {
+                        textarea.value = chatInputDraft;
+                    }
+                    textarea.style.height = 'auto';
+                    textarea.style.height = Math.min(textarea.scrollHeight, 180) + 'px';
+                    textarea.selectionStart = textarea.selectionEnd = textarea.value.length;
+                }
             }
         });
 
+        // ─── POPOVER DE AÇÕES FLUTUANTES AO SELECIONAR OU CLICAR 2X ───
+        let currentSelectedText = '';
+        let currentSelectedContext = '';
+
+        function handleTextSelection(e) {
+            if (e.target.closest('#aiSelectionPopover')) return;
+
+            const selection = window.getSelection();
+            const txt = selection ? selection.toString().trim() : '';
+            const popover = document.getElementById('aiSelectionPopover');
+
+            if (!txt || txt.length < 2 || txt.length > 100) {
+                if (popover && !e.target.closest('#aiSelectionPopover')) popover.style.display = 'none';
+                return;
+            }
+
+            const msgBubble = selection.anchorNode?.parentElement?.closest('.msg-bubble') || selection.anchorNode?.parentElement?.closest('.chat-bubble') || selection.anchorNode?.parentElement?.closest('.msg-text-content') || selection.anchorNode?.parentElement?.closest('.msg-content-col');
+            if (!msgBubble) {
+                if (popover) popover.style.display = 'none';
+                return;
+            }
+
+            currentSelectedText = txt;
+
+            const fullMsg = msgBubble.innerText || '';
+            const wordIdx = fullMsg.indexOf(txt);
+            let context = txt;
+            if (wordIdx !== -1) {
+                const start = Math.max(0, fullMsg.lastIndexOf('.', wordIdx) + 1);
+                const end = fullMsg.indexOf('.', wordIdx + txt.length);
+                context = fullMsg.slice(start, end !== -1 ? end + 1 : fullMsg.length).trim();
+            }
+            currentSelectedContext = context || txt;
+
+            const range = selection.getRangeAt(0);
+            const rect = range.getBoundingClientRect();
+
+            popover.style.display = 'block';
+            document.getElementById('popoverWordBadge').textContent = `"${txt.length > 25 ? txt.slice(0, 22) + '...' : txt}"`;
+
+            const popoverWidth = 270;
+            let left = rect.left + (rect.width / 2) - (popoverWidth / 2);
+            let top = rect.top - 150;
+
+            if (left < 10) left = 10;
+            if (left + popoverWidth > window.innerWidth - 10) left = window.innerWidth - popoverWidth - 10;
+            if (top < 10) top = rect.bottom + 12;
+
+            popover.style.left = left + 'px';
+            popover.style.top = top + 'px';
+        }
+
+        function fecharSelectionPopover() {
+            const popover = document.getElementById('aiSelectionPopover');
+            if (popover) popover.style.display = 'none';
+        }
+
+        document.addEventListener('mouseup', handleTextSelection);
+        document.addEventListener('dblclick', handleTextSelection);
+        document.addEventListener('mousedown', (e) => {
+            if (!e.target.closest('#aiSelectionPopover')) {
+                fecharSelectionPopover();
+            }
+        });
+
+        function perguntarSignificadoTermo() {
+            fecharSelectionPopover();
+            const prompt = `Explique de forma simples e didática o que significa "${currentSelectedText}" no contexto da seguinte frase: "${currentSelectedContext}".`;
+            const input = document.getElementById('chatInput');
+            if (input) {
+                input.value = prompt;
+                input.focus();
+                input.style.height = 'auto';
+                input.style.height = Math.min(input.scrollHeight, 180) + 'px';
+                input.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }
+            exibirToast(`Pergunta sobre "${currentSelectedText}" pronta no chat. Aperte Enter!`, 'fa-lightbulb');
+        }
+
+        function simplificarTermoContexto() {
+            fecharSelectionPopover();
+            const prompt = `Reescreva de forma mais simples e acolhedora para o cliente este trecho, sem termos difíceis: "${currentSelectedContext}".`;
+            const input = document.getElementById('chatInput');
+            if (input) {
+                input.value = prompt;
+                input.focus();
+                input.style.height = 'auto';
+                input.style.height = Math.min(input.scrollHeight, 180) + 'px';
+                input.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }
+            exibirToast('Pedido de simplificação carregado no chat. Aperte Enter!', 'fa-wand-magic-sparkles');
+        }
+
+        function perguntarSobreTermoNoChat() {
+            fecharSelectionPopover();
+            const input = document.getElementById('chatInput');
+            if (input) {
+                input.value = `Sobre "${currentSelectedText}": `;
+                input.focus();
+                input.style.height = 'auto';
+                input.style.height = Math.min(input.scrollHeight, 180) + 'px';
+                input.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }
+        }
+
+        function copiarTermoSelecionado() {
+            fecharSelectionPopover();
+            if (navigator.clipboard && currentSelectedText) {
+                navigator.clipboard.writeText(currentSelectedText);
+                exibirToast(`"${currentSelectedText}" copiado!`, 'fa-check');
+            }
+        }
+
         document.addEventListener('DOMContentLoaded', () => {
             carregarSessao();
+            initCanvasResizer();
+            initMessageContextMenu();
             const savedName = localStorage.getItem('hermes_pref_name');
             if (savedName) {
                 document.getElementById('prefUserName').value = savedName;
@@ -4649,9 +6434,22 @@
                 ctx.globalCompositeOperation = layer.blend || 'source-over';
 
                 if (layer.type === 'image' && studioBaseImage && studioBaseImage.complete) {
-                    ctx.filter = `brightness(${b}%) contrast(${c}%) saturate(${s}%) hue-rotate(${hRot}deg)`;
-                    ctx.drawImage(studioBaseImage, 0, 0, w, h);
-                    ctx.filter = 'none';
+                    if (window.PhotoCraftWasm && window.PhotoCraftWasm.ready) {
+                        ctx.drawImage(studioBaseImage, 0, 0, w, h);
+                        window.PhotoCraftWasm.applyToCanvas(canvas, {
+                            brightness: b - 100,
+                            contrast: c - 100,
+                            saturation: s - 100,
+                            temperature: temp,
+                            sharpen: sh,
+                            vignette: vig,
+                            scurve: Math.max(0, c - 100)
+                        });
+                    } else {
+                        ctx.filter = `brightness(${b}%) contrast(${c}%) saturate(${s}%) hue-rotate(${hRot}deg)`;
+                        ctx.drawImage(studioBaseImage, 0, 0, w, h);
+                        ctx.filter = 'none';
+                    }
                 } else if (layer.type === 'curves') {
                     ctx.fillStyle = 'rgba(255, 255, 255, 0.05)';
                     ctx.fillRect(0, 0, w, h);
@@ -4924,5 +6722,75 @@
         }
 
     </script>
+
+    <!-- POPOVER CONTEXTUAL FLUTUANTE (DUPLO CLIQUE / SELEÇÃO DE TERMO) -->
+    <div id="aiSelectionPopover" class="ai-selection-popover" style="display:none">
+        <div class="popover-header">
+            <span class="popover-word-badge" id="popoverWordBadge">"palavra"</span>
+            <button class="btn-icon-subtle" onclick="fecharSelectionPopover()" style="width:20px;height:20px;font-size:10px" title="Fechar"><i class="fas fa-xmark"></i></button>
+        </div>
+        <div class="popover-items">
+            <button class="popover-item" onclick="perguntarSignificadoTermo()">
+                <i class="fas fa-lightbulb" style="color:#fbbf24"></i>
+                <span>O que significa?</span>
+            </button>
+            <button class="popover-item" onclick="simplificarTermoContexto()">
+                <i class="fas fa-wand-magic-sparkles" style="color:#a855f7"></i>
+                <span>Simplificar / Traduzir</span>
+            </button>
+            <button class="popover-item" onclick="perguntarSobreTermoNoChat()">
+                <i class="fas fa-comment-dots" style="color:#6366f1"></i>
+                <span>Levar para o Chat</span>
+            </button>
+            <button class="popover-item" onclick="copiarTermoSelecionado()">
+                <i class="fas fa-copy" style="color:#94a3b8"></i>
+                <span>Copiar termo</span>
+            </button>
+        </div>
+    </div>
+    <!-- MENU DE CONTEXTO DO BOTÃO DIREITO (HERMES AI PRO OBSIDIAN CONTEXT MENU) -->
+    <div id="messageContextMenu" class="hermes-context-menu" style="display:none">
+        <div class="context-menu-header">
+            <span class="context-menu-badge" id="ctxBadge">Mensagem</span>
+            <span class="context-menu-hint"><i class="fas fa-sparkles"></i> Hermes AI Pro</span>
+        </div>
+        <div class="context-menu-divider"></div>
+        <button class="context-menu-item" onclick="ctxActionFavoritarChat()">
+            <i class="fas fa-star" style="color:#f59e0b"></i>
+            <span id="ctxFavLabel">Favoritar Conversa ⭐</span>
+            <span class="context-menu-shortcut">Alt+F</span>
+        </button>
+        <button class="context-menu-item" onclick="ctxActionCopiarMensagem()">
+            <i class="fas fa-copy" style="color:#38bdf8"></i>
+            <span>Copiar Mensagem</span>
+            <span class="context-menu-shortcut">Ctrl+C</span>
+        </button>
+        <button class="context-menu-item" onclick="ctxActionFixarMensagem()">
+            <i class="fas fa-thumbtack" style="color:#a855f7"></i>
+            <span id="ctxPinLabel">Fixar Mensagem no Topo</span>
+            <span class="context-menu-shortcut">📌</span>
+        </button>
+        <button class="context-menu-item" onclick="ctxActionCitarMensagem()">
+            <i class="fas fa-quote-left" style="color:#10b981"></i>
+            <span>Citar / Responder</span>
+            <span class="context-menu-shortcut">💬</span>
+        </button>
+        <button class="context-menu-item" id="ctxBtnRegenerar" onclick="ctxActionRegenerar()">
+            <i class="fas fa-rotate-right" style="color:#ec4899"></i>
+            <span>Regenerar com IA Pro</span>
+            <span class="context-menu-shortcut">🔁</span>
+        </button>
+        <div class="context-menu-divider"></div>
+        <button class="context-menu-item" onclick="ctxActionExportarMarkdown()">
+            <i class="fas fa-file-arrow-down" style="color:#6366f1"></i>
+            <span>Exportar Chat (Markdown)</span>
+            <span class="context-menu-shortcut">📥</span>
+        </button>
+        <button class="context-menu-item danger" onclick="ctxActionExcluirMensagem()">
+            <i class="fas fa-trash-can" style="color:#ef4444"></i>
+            <span>Excluir Mensagem</span>
+            <span class="context-menu-shortcut">Del</span>
+        </button>
+    </div>
 </body>
 </html>
