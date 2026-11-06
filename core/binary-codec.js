@@ -179,3 +179,4 @@ class BinaryCodec {
 }
 
 module.exports = BinaryCodec;
+
