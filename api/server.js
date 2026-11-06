@@ -38,10 +38,13 @@ const {
 } = orchestrator;
 const { setupWebSocketServer } = require('../core/websocket-server');
 const BinaryCodec = require('../core/binary-codec');
+const KeepWarmEngine = require('../core/keep-warm');
 
 const PORT = parseInt(process.env.PORT || '3030', 10);
 const MASTER_KEY = process.env.DIFFAI_API_KEY || process.env.MASTER_API_KEY || 'sk-diffai-master-key';
 const memory = new MemoryManager();
+const keepWarm = new KeepWarmEngine();
+keepWarm.start();
 
 function sendJson(res, statusCode, data) {
   const payload = Buffer.from(JSON.stringify(data), 'utf8');
@@ -119,6 +122,22 @@ const server = http.createServer(async (req, res) => {
   // Monitor de Latência EWMA do Cluster
   if (pathname === '/api/cluster-health') {
     sendJson(res, 200, { ok: true, cluster: getModelHealthReport(), memory: getMemoryReport() });
+    return;
+  }
+
+  // Monitor e Controle do Keep-Warm Engine (Zero Cold-Start)
+  if (pathname === '/api/keep-warm') {
+    sendJson(res, 200, { ok: true, keepWarm: keepWarm.getStatus() });
+    return;
+  }
+  if (pathname === '/api/keep-warm/start' && req.method === 'POST') {
+    keepWarm.start();
+    sendJson(res, 200, { ok: true, message: 'Keep-Warm ativado.', keepWarm: keepWarm.getStatus() });
+    return;
+  }
+  if (pathname === '/api/keep-warm/stop' && req.method === 'POST') {
+    keepWarm.stop();
+    sendJson(res, 200, { ok: true, message: 'Keep-Warm pausado.', keepWarm: keepWarm.getStatus() });
     return;
   }
 
