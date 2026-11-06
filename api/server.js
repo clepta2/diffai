@@ -6,6 +6,23 @@
 const http = require('http');
 const path = require('path');
 const fs = require('fs');
+
+// Carrega .env nativamente se existir
+const envPath = path.resolve(__dirname, '..', '.env');
+if (fs.existsSync(envPath)) {
+  const lines = fs.readFileSync(envPath, 'utf8').split(/\r?\n/);
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (trimmed && !trimmed.startsWith('#')) {
+      const eqIdx = trimmed.indexOf('=');
+      if (eqIdx > 0) {
+        const k = trimmed.slice(0, eqIdx).trim();
+        const v = trimmed.slice(eqIdx + 1).trim().replace(/^['"]|['"]$/g, '');
+        if (!process.env[k]) process.env[k] = v;
+      }
+    }
+  }
+}
 const MemoryManager = require('../core/memory-manager');
 const loadSkills = require('../core/load-skills');
 const { speculativeRace, runSequentialPipeline, runEnsembleConsensus } = require('../core/orchestrator');
