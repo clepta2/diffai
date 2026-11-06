@@ -28,9 +28,9 @@ try {
   } catch (_) {}
 }
 
-const HOST = '127.0.0.1';
-const PORT = 20128;
-const MASTER_KEY = process.env.DIFFAI_API_KEY || process.env.OMNIROUTER_API_KEY || '';
+const HOST = process.env.OMNIROUTER_HOST || '100.98.113.39';
+const PORT = parseInt(process.env.OMNIROUTER_PORT || '20128', 10);
+const MASTER_KEY = process.env.OMNIROUTER_API_KEY || process.env.DIFFAI_API_KEY || 'sk-ed50645fd257c652-hrayzt-ae2a2594';
 
 // Pool de Conexões Persistentes Keep-Alive com TCP NoDelay
 const httpAgent = new http.Agent({
