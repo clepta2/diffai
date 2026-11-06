@@ -42,17 +42,16 @@ const httpAgent = new http.Agent({
 });
 
 const MODEL_ALIASES = {
-  'r1': 'deepseek-web/deepseek-reasoner',
-  'reasoner': 'deepseek-web/deepseek-reasoner',
-  'claude': 'antigravity/claude-sonnet-4-6',
-  'sonnet': 'antigravity/claude-sonnet-4-6',
-  'kiro-sonnet': 'kiro/claude-sonnet-4.5',
-  'haiku': 'ddgw/claude-haiku-4-5',
-  'gemini': 'antigravity/gemini-3.1-flash-lite',
-  'flash': 'antigravity/gemini-3.1-flash-lite',
-  'chat': 'deepseek-web/deepseek-chat',
-  'gpt': 'ddgw/gpt-5.4-mini',
-  'auto': 'auto/best-free'
+  'r1': 'ollama/deepseek-v4.1-flash:cloud',
+  'reasoner': 'ag/claude-opus-4-6-thinking',
+  'claude': 'ag/claude-sonnet-4-6',
+  'sonnet': 'ag/claude-sonnet-4-6',
+  'opus': 'ag/claude-opus-4-6-thinking',
+  'gpt': 'ag/gpt-oss-120b-medium',
+  'flash': 'gc/gemini-2.5-flash',
+  'gemini': 'gc/gemini-2.5-flash',
+  '9router': '9router',
+  'auto': 'ag/claude-sonnet-4-6'
 };
 
 // Protocolo A2A Ultra-Compacto (Zero Conversa Fiada)
@@ -221,10 +220,15 @@ function streamQueryOmniRouter(modelInput, prompt, onToken, systemPrompt = '', o
  * Dispara múltiplos modelos de elite simultaneamente.
  * Assim que o PRIMEIRO modelo emite o primeiro token, todos os outros são abortados imediatamente!
  */
-async function speculativeRace(models, prompt, onToken, systemPrompt = '', options = {}) {
-  const candidateModels = Array.isArray(models) && models.length > 0
-    ? models
-    : ['ddgw/gpt-5.4-mini', 'antigravity/gemini-3.1-flash-lite', 'antigravity/claude-sonnet-4-6'];
+async function speculativeRace(arg1, arg2, onToken, systemPrompt = '', options = {}) {
+  let candidateModels, prompt;
+  if (Array.isArray(arg1)) {
+    candidateModels = arg1;
+    prompt = arg2;
+  } else {
+    candidateModels = Array.isArray(arg2) && arg2.length > 0 ? arg2 : ['ag/claude-sonnet-4-6', 'ag/gpt-oss-120b-medium'];
+    prompt = arg1;
+  }
 
   const cacheKey = hashPrompt(candidateModels.join('|'), prompt, systemPrompt, options.a2a);
   const cached = getFromCache(cacheKey);

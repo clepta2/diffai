@@ -138,16 +138,16 @@ const server = http.createServer(async (req, res) => {
       const mode = body.mode || (body.model === 'diffai-consensus' ? 'consensus' : (body.model === 'diffai-racing' ? 'race' : 'fast'));
 
       if (mode === 'race') {
-        const raceRes = await speculativeRace(userPrompt, ['kr/gpt-5.6-sol', 'kr/claude-sonnet-4.5', 'gemini']);
-        replyText = raceRes.content || 'Resposta concluída via Hedged Race.';
+        const raceRes = await speculativeRace(userPrompt, ['ag/claude-sonnet-4-6', 'ag/claude-opus-4-6-thinking', 'ag/gpt-oss-120b-medium']);
+        replyText = raceRes.reply || raceRes.content || 'Resposta concluída via Hedged Race.';
       } else if (mode === 'consensus') {
         const conRes = await runEnsembleConsensus(userPrompt);
         replyText = conRes.synthesis || 'Consenso multimodelo concluído.';
       } else {
         // Modo Padrão: Prompt Enriquecido com Memória e Skill
         const enrichedPrompt = `${skillInjection ? `[Skills Ativas]\n${skillInjection}\n\n` : ''}${tenantCtx.textBlock}\n\nPergunta do Lojista: ${userPrompt}`;
-        const defaultRace = await speculativeRace(enrichedPrompt, ['kr/claude-sonnet-4.5', 'gemini']);
-        replyText = defaultRace.content || 'Resposta gerada com sucesso.';
+        const defaultRace = await speculativeRace(enrichedPrompt, ['ag/claude-sonnet-4-6', 'ag/gpt-oss-120b-medium']);
+        replyText = defaultRace.reply || defaultRace.content || 'Resposta gerada com sucesso.';
       }
 
       // Resposta no formato compatível OpenAI
