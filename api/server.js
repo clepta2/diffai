@@ -95,6 +95,10 @@ const server = http.createServer(async (req, res) => {
 
   // Modelos disponíveis (OpenAI Standard)
   if (pathname === '/v1/models') {
+    if (!verifyAuth(req)) {
+      sendJson(res, 401, { error: { message: 'Chave de API DiffAI inválida ou ausente.', type: 'invalid_request_error' } });
+      return;
+    }
     sendJson(res, 200, {
       object: 'list',
       data: [
