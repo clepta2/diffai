@@ -188,3 +188,4 @@ console.log('✓ Schemas de ferramentas registrados em:', toolsDir);
 
 console.log('\n🎉 SUCESSO! DiffAI configurado no Antigravity.');
 console.log('Ao abrir o Antigravity IDE, o orquestrador e as 5 ferramentas estarão ativas imediatamente!\n');
+

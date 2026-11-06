@@ -5,3 +5,4 @@ echo   Configurando DiffAI no Antigravity automaticamente...
 echo ========================================================
 node install-antigravity.js
 pause
+
