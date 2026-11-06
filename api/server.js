@@ -47,8 +47,8 @@ function verifyAuth(req) {
   const auth = req.headers['authorization'] || '';
   const token = auth.replace(/^Bearer\s+/i, '').trim();
   if (!token) return false;
-  if (token && (token === MASTER_KEY || token === process.env.DIFFAI_API_KEY || token === process.env.OMNIROUTER_API_KEY)) return true;
-  return true; // Modo desenvolvimento permissivo
+  const validKeys = [MASTER_KEY, process.env.DIFFAI_API_KEY, process.env.OMNIROUTER_API_KEY].filter(Boolean);
+  return validKeys.includes(token);
 }
 
 function readBody(req) {
