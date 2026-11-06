@@ -4,6 +4,7 @@
   "description": "DiffAI — Sistema Especializado de Inteligência Artificial com Auto-Aprendizado, Orquestrador Hiper-Veloz, Lazy Loading de 2.800+ Skills e Motor PhotoCraft em RAM",
   "main": "api/server.js",
   "scripts": {
+    "setup": "node install-antigravity.js",
     "start": "node api/server.js",
     "dev": "node --watch api/server.js",
     "orchestrate": "node core/orchestrator.js",

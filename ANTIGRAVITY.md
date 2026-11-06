@@ -4,6 +4,23 @@ Este documento ensina o **Google Antigravity** (e qualquer outro agente ou desen
 
 ---
 
+## ⚡ Configuração 100% Automática em 1 Clique (Para Qualquer Pessoa / Máquina)
+
+Se você acabou de clonar este repositório em uma máquina nova com Antigravity IDE, basta rodar:
+
+```bash
+npm run setup
+```
+*(No Windows, você também pode simplesmente dar um duplo clique no arquivo `setup.bat`!)*
+
+**O que o comando faz automaticamente:**
+1. Cria seu arquivo local `.env` a partir do `.env.example`.
+2. Registra o conector MCP do DiffAI em `~/.gemini/config/mcp_config.json`.
+3. Registra todas as 5 ferramentas (`multi_agent_pipeline`, `deepseek_r1_reasoning`, `claude_code_expert`, `speculative_fast_query`, `a2a_compact_query`) no Antigravity.
+4. Ao abrir ou recarregar o Antigravity IDE, **todas as skills e o orquestrador já estarão disponíveis imediatamente!**
+
+---
+
 ## 🌐 Endpoints Disponíveis para Conexão Remota
 
 Você pode usar o DiffAI de qualquer lugar do mundo (servidor, nuvem, terminal ou máquina local) através de dois endpoints públicos prontos:
