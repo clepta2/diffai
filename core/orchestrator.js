@@ -1217,6 +1217,110 @@ function auditZeroHardcode(code, context = {}) {
 }
 
 /**
+ * ⚖️ TRIBUNAL ANTI-ALUCINAÇÃO DO PENTAGON SWARM (GROUND TRUTH ARBITER)
+ * Audita o código gerado contra 5 categorias de alucinações críticas de IA:
+ * 1. ALUCINAÇÃO DE FUNÇÃO FANTASMA (handlers HTML sem implementação no script)
+ * 2. ALUCINAÇÃO DE BANCO DE DADOS (tabelas chamadas no frontend que não existem no DDL do CTO)
+ * 3. ALUCINAÇÃO DE CDNs & DEPENDÊNCIAS (URLs inventadas ou suspeitas)
+ * 4. ALUCINAÇÃO DE SINTAXE JAVASCRIPT (Script que falharia ao executar no browser)
+ * 5. ALUCINAÇÃO DE PROPRIEDADES FANTASMAS DO CONTRATO
+ */
+function auditZeroHallucination(code, options = {}) {
+  const issues = [];
+  const ddlSql = options.ddlSql || '';
+  const niche = options.niche || '';
+
+  if (!code || typeof code !== 'string') {
+    return { passed: false, score: 0, issues: ['Código inexistente para auditoria.'] };
+  }
+
+  // 1. Verificação de Funções Fantasmas em Handlers HTML
+  const handlerMatches = code.matchAll(/on[a-z]+\s*=\s*["']\s*([a-zA-Z0-9_$]+)\s*\(/gi);
+  for (const m of handlerMatches) {
+    const fnName = m[1];
+    if (['alert', 'confirm', 'prompt', 'open', 'close', 'print', 'focus', 'blur'].includes(fnName)) continue;
+    const fnDeclared = new RegExp(`(function\\s+${fnName}\\b|const\\s+${fnName}\\s*=|let\\s+${fnName}\\s*=|var\\s+${fnName}\\s*=|window\\.${fnName}\\s*=)`).test(code);
+    if (!fnDeclared) {
+      issues.push({
+        severity: 'HIGH',
+        category: 'ALUCINACAO_FUNCAO_FANTASMA',
+        message: `Handler HTML invoca a função "${fnName}()", mas ela NUNCA foi declarada no <script>. Função fantasma alucinada.`
+      });
+    }
+  }
+
+  // 2. Verificação de Tabelas Supabase Inexistentes (Cross-Check Frontend vs DDL)
+  if (ddlSql) {
+    const supabaseTableMatches = code.matchAll(/supabase\.from\s*\(\s*['"]([a-zA-Z0-9_]+)['"]\s*\)/g);
+    for (const m of supabaseTableMatches) {
+      const table = m[1];
+      const tableInDdl = new RegExp(`CREATE\\s+TABLE\\s+(IF\\s+NOT\\s+EXISTS\\s+)?(public\\.)?${table}\\b`, 'i').test(ddlSql);
+      if (!tableInDdl) {
+        issues.push({
+          severity: 'CRITICAL',
+          category: 'ALUCINACAO_TABELA_FANTASMA',
+          message: `O frontend chama "supabase.from('${table}')", mas a tabela "${table}" NÃO foi criada no schema SQL do banco. Alucinação de persistência.`
+        });
+      }
+    }
+  }
+
+  // 3. Verificação de CDNs Inventadas / Falsas
+  const scriptSrcMatches = code.matchAll(/<script[^>]+src=["']([^"']+)["']/gi);
+  const trustedCdns = ['cdn.tailwindcss.com', 'cdnjs.cloudflare.com', 'kit.fontawesome.com', 'cdn.jsdelivr.net', 'unpkg.com', 'supabase.co'];
+  for (const m of scriptSrcMatches) {
+    const url = m[1];
+    if (url.startsWith('http://') || url.startsWith('https://')) {
+      const isTrusted = trustedCdns.some(cdn => url.includes(cdn));
+      if (!isTrusted) {
+        issues.push({
+          severity: 'HIGH',
+          category: 'ALUCINACAO_CDN_SUSPEITA',
+          message: `Script externo não homologado ou potencialmente alucinado: "${url}". Use apenas CDNs oficiais (Tailwind, FontAwesome, Cloudflare).`
+        });
+      }
+    }
+  }
+
+  // 4. Verificação de Sintaxe JavaScript Básica (Blocos <script>)
+  const scriptBlocks = code.matchAll(/<script(?![^>]*src)[^>]*>([\s\S]*?)<\/script>/gi);
+  const vm = require('vm');
+  for (const block of scriptBlocks) {
+    const jsCode = block[1].trim();
+    if (jsCode) {
+      try {
+        new vm.Script(jsCode);
+      } catch (syntaxErr) {
+        if (!jsCode.includes('import ') && !jsCode.includes('export ')) {
+          issues.push({
+            severity: 'CRITICAL',
+            category: 'ALUCINACAO_SINTAXE_JS',
+            message: `Erro de sintaxe JavaScript detectado no <script>: ${syntaxErr.message}. Código inválido gerado pela IA.`
+          });
+        }
+      }
+    }
+  }
+
+  // 5. Cálculo do Score Anti-Alucinação (0 a 100)
+  let score = 100;
+  issues.forEach(iss => {
+    if (iss.severity === 'CRITICAL') score -= 35;
+    else if (iss.severity === 'HIGH') score -= 20;
+    else if (iss.severity === 'MEDIUM') score -= 10;
+  });
+  score = Math.max(0, score);
+
+  return {
+    passed: score >= 80 && !issues.some(i => i.severity === 'CRITICAL'),
+    score,
+    issuesCount: issues.length,
+    issues,
+    verdict: score >= 90 ? 'LIVRE_DE_ALUCINACOES_TIER_1' : (score >= 80 ? 'ALUCINACOES_LEVES_CONTORNADAS' : 'REPROVADO_POR_ALUCINACAO')
+  };
+}
+
+/**
  * 🎨 GERADOR DE PREVIEWS A/B DE CONCORRENTES & TEMPLATES COM AUDITORIA MULTI-CRITÉRIO (1 A 100)
  * Analisa os melhores sites reais do nicho via Scraping Competitivo e calcula notas de 1 a 100 para:
  * - 🎨 Beleza / Estética Visual (1 a 100)
@@ -1709,13 +1813,22 @@ Gere apenas o bloco de código HTML completo agora:`;
   if (devRes.usedModel) roster.programmer.model = devRes.usedModel;
   if (onProgrammerComplete) onProgrammerComplete(devRes.reply);
 
-  // 3. AUDITORIA ANTI-HARDCODE DO CTO GATEKEEPER (ZERO DÉBITO TÉCNICO)
+  // 3. AUDITORIA ANTI-HARDCODE & TRIBUNAL ANTI-ALUCINAÇÃO DO CTO GATEKEEPER
   const hardcodeAudit = auditZeroHardcode(devRes.reply, clientContext);
   if (!hardcodeAudit.passed) {
     console.warn(`[CTO Gatekeeper Alerta]: Código gerado contém débitos técnicos de hardcoding (Score: ${hardcodeAudit.score}/100).`, hardcodeAudit.issues);
   }
 
-  if (onProgress) onProgress(80, 'Código gerado e auditado contra hardcode. Disparando Revisor de UX e Testador QA...');
+  const hallucinationAudit = auditZeroHallucination(devRes.reply, {
+    ddlSql: ctoRes.reply,
+    niche,
+    clientContext
+  });
+  if (!hallucinationAudit.passed) {
+    console.warn(`[Tribunal Anti-Alucinação Alerta]: Código gerado contém potenciais alucinações (Score: ${hallucinationAudit.score}/100).`, hallucinationAudit.issues);
+  }
+
+  if (onProgress) onProgress(80, 'Código gerado e auditado contra hardcode e alucinações. Disparando Revisor de UX e Testador QA...');
 
   // 4. AUDITORIA CONCORRENTE: REVISOR & TESTADOR
   if (onStageStart) onStageStart('Auditoria Concorrente de Qualidade (Revisor UX + Testador QA)');
@@ -1779,7 +1892,8 @@ CODIFICAÇÃO:    💻 Programador Lead (${roster.programmer.model} — ${roster
 REVISÃO:        🧐 Tech Lead Revisor (${roster.reviewer.model} — ${roster.reviewer.ewmaMs}ms EWMA)
 HOMOLOGAÇÃO:    🧪 QA Engineer (${roster.tester.model} — ${roster.tester.ewmaMs}ms EWMA)
 FUNCIONÁRIOS:   👷 Sub-Workers (${roster.workersSummary})
-ANTI-HARDCODE:  🛡️ CTO Gatekeeper (Score: ${hardcodeAudit.score}/100 — Verdict: ${hardcodeAudit.verdict})
+ANTI-HARDCODE:    🛡️ CTO Gatekeeper (Score: ${hardcodeAudit.score}/100 — Verdict: ${hardcodeAudit.verdict})
+ANTI-ALUCINAÇÃO:  ⚖️ Tribunal de Grounding (Score: ${hallucinationAudit.score}/100 — Verdict: ${hallucinationAudit.verdict})
 ORQUESTRADOR:   ⚡ DiffAI EWMA Dynamic Dispatcher v3.2 (Zero Hardcode)
 STATUS:         100% PRODUÇÃO — ZERO TECH DEBT — STACK 10 ANOS
 PADRÃO:         Obsidian Glass Dark Mode | Tailwind CSS | Supabase PostgreSQL
@@ -1872,6 +1986,13 @@ PADRÃO:         Obsidian Glass Dark Mode | Tailwind CSS | Supabase PostgreSQL
       model: roster.cto.model,
       auditTimestamp: new Date().toISOString(),
       auditResult: hardcodeAudit
+    }, null, 2), 'utf8');
+
+    fs.writeFileSync(path.join(baseDir, 'audit', 'hallucination-audit.json'), JSON.stringify({
+      author: 'Tribunal Anti-Alucinação (CTO Gatekeeper + AST Grounding)',
+      model: roster.cto.model,
+      auditTimestamp: new Date().toISOString(),
+      auditResult: hallucinationAudit
     }, null, 2), 'utf8');
 
     fs.writeFileSync(path.join(baseDir, 'audit', 'feature-matrix.json'), JSON.stringify({
@@ -2142,6 +2263,7 @@ Exemplos:
 module.exports = {
   runPentagonSwarmPipeline,
   auditZeroHardcode,
+  auditZeroHallucination,
   generateAbPreviews,
   scrapeDualSources,
   resolveDynamicRoleModel,
