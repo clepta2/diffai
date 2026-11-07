@@ -354,7 +354,7 @@ async function speculativeRace(arg1, arg2, onToken, systemPrompt = '', options =
     candidateModels = arg1;
     prompt = arg2;
   } else {
-    candidateModels = Array.isArray(arg2) && arg2.length > 0 ? arg2 : ['ag/claude-sonnet-4-6', 'ag/gpt-oss-120b-medium'];
+    candidateModels = Array.isArray(arg2) && arg2.length > 0 ? arg2 : ['groq/openai/gpt-oss-120b', 'ag/claude-sonnet-4-6', 'ag/gpt-oss-120b-medium'];
     prompt = arg1;
   }
 

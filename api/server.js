@@ -336,11 +336,11 @@ const server = http.createServer(async (req, res) => {
           }
         } else {
           if (isStream) {
-            await speculativeRace(enrichedPrompt, ['ag/claude-sonnet-4-6', 'ag/gpt-oss-120b-medium'], sendChunk);
+            await speculativeRace(enrichedPrompt, ['groq/openai/gpt-oss-120b', 'ag/claude-sonnet-4-6', 'ag/gpt-oss-120b-medium'], sendChunk);
             finishStream();
             return;
           } else {
-            const defaultRace = await speculativeRace(enrichedPrompt, ['ag/claude-sonnet-4-6', 'ag/gpt-oss-120b-medium']);
+            const defaultRace = await speculativeRace(enrichedPrompt, ['groq/openai/gpt-oss-120b', 'ag/claude-sonnet-4-6', 'ag/gpt-oss-120b-medium']);
             replyText = defaultRace.reply || defaultRace.content || 'Resposta gerada com sucesso.';
           }
         }
