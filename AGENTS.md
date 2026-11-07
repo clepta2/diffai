@@ -23,6 +23,10 @@
 - **OmniRouter Central:** Roda na porta `20128` da VM (`http://100.98.113.39:20128`).
 - **Orquestrador DiffAI Local:** Roda na porta `3030` (`http://127.0.0.1:3030`), repassando as requisições para a VM via rotação rápida.
 - **Banco de Dados de Conexões da VM:** `/home/ozpro/.9router/db/data.sqlite` contendo mais de 80 contas em pool ativo.
+- **Auto-Cura e Resiliência Nativa (Boot/Shutdown/Cron):**
+  - **No Desligamento (`shutdown.target`):** Serviço systemd `ozpro-shutdown.service` executa `pm2 save` e checkpoint WAL no SQLite do OmniRouter, prevenindo qualquer perda ou corrupção de dados ao desligar a VM.
+  - **No Início (`@reboot` Cron Nativo):** Script `/home/ozpro/scripts/boot_healing.sh` garante ZRAM ativo (5.7GB), swappiness=10, Tailscale conectado e executa o `provider_guardian.py` para destravamento instantâneo de contas.
+  - **A cada 2 horas (`0 */2 * * *`):** Cron nativo executa auto-cura periódica contínua, destravando contas em backoff e atualizando `/home/ozpro/health/best_models.json`.
 
 ### MODELOS OFICIAIS TESTADOS E HOMOLOGADOS (STATUS 200 OK):
 1. **Inteligência Máxima & Raciocínio (Claude):**
