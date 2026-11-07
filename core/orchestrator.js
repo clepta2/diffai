@@ -1441,6 +1441,58 @@ function auditTaskCompletionEvidence(baseDir, options = {}) {
 }
 
 /**
+ * 🛡️ BLINDAGEM ANTI-BYPASS DE TENANT & PROTEÇÃO CONTRA ADULTERAÇÃO (ANTI-TAMPER SHIELD)
+ * Verifica se o usuário ou a IA tentou desabilitar RLS, manipular company_id ou burlar o tenant.
+ * SE DETECTAR QUALQUER VIOLAÇÃO OU BYPASS:
+ * - O site NEM BUILDA (lança erro fatal e interrompe na hora).
+ * - Mensagem ao usuário NUNCA revela detalhes do bypass para não dar pistas de como atacar.
+ *   Apenas exibe formalmente:
+ *   "O build foi interrompido porque o código viola os Termos de Serviço e a Política de Integridade da Plataforma (Erro: SEC-TERMS-403)."
+ */
+function verifyTenantIntegrityAndAntiTamper(code, ddlSql, context = {}) {
+  const violations = [];
+  const publicError = "O build foi interrompido porque o código viola os Termos de Serviço e a Política de Integridade da Plataforma (Erro: SEC-TERMS-403). Entre em contato com a administração.";
+
+  if (!code || typeof code !== 'string') {
+    return { ok: false, error: publicError, internalReason: 'Código vazio ou ausente.' };
+  }
+
+  // 1. Detecção de Tentativa de Desabilitar RLS no SQL
+  if (ddlSql && /ALTER\s+TABLE.*DISABLE\s+ROW\s+LEVEL\s+SECURITY/i.test(ddlSql)) {
+    violations.push('TENTATIVA_DESABILITAR_RLS');
+  }
+
+  // 2. Detecção de Injeção de Bypass em Cláusulas de Tenant (1=1, company_id IS NULL, OR true)
+  if (code.match(/company_id\s*=\s*(null|undefined|''|""|'1=1'|"1=1"|'\*')/i) ||
+      (ddlSql && ddlSql.match(/USING\s*\(\s*(true|1\s*=\s*1|company_id\s+IS\s+NULL)\s*\)/i))) {
+    violations.push('INJECAO_BYPASS_TENANT_RLS');
+  }
+
+  // 3. Detecção de Tentativa de sobrescrever ou anular window.SITE_CONFIG.company.id
+  if (code.match(/SITE_CONFIG\.company\.id\s*=\s*(null|undefined|""|'')/i) ||
+      code.match(/delete\s+window\.SITE_CONFIG/i) ||
+      code.match(/delete\s+SITE_CONFIG\.company/i)) {
+    violations.push('ADULTERACAO_CONTRATO_TENANT_CLIENTE');
+  }
+
+  // 4. Detecção de Injeção de Chave Mestre de Outro Tenant ou Service Role Privado
+  if (code.match(/service_role/i) || code.match(/supabase_admin/i) || code.match(/postgres_superuser/i)) {
+    violations.push('TENTATIVA_ELEVACAO_PRIVILEGIO');
+  }
+
+  if (violations.length > 0) {
+    return {
+      ok: false,
+      error: publicError,
+      internalReason: `Violações detectadas: ${violations.join(', ')}`,
+      violations
+    };
+  }
+
+  return { ok: true, error: null };
+}
+
+/**
  * 🎨 GERADOR DE PREVIEWS A/B DE CONCORRENTES & TEMPLATES COM AUDITORIA MULTI-CRITÉRIO (1 A 100)
  * Analisa os melhores sites reais do nicho via Scraping Competitivo e calcula notas de 1 a 100 para:
  * - 🎨 Beleza / Estética Visual (1 a 100)
@@ -1948,6 +2000,13 @@ Gere apenas o bloco de código HTML completo agora:`;
     console.warn(`[Tribunal Anti-Alucinação Alerta]: Código gerado contém potenciais alucinações (Score: ${hallucinationAudit.score}/100).`, hallucinationAudit.issues);
   }
 
+  // 3.1 BLINDAGEM ANTI-BYPASS DE TENANT & ADULTERAÇÃO (ANTI-TAMPER SHIELD)
+  const tenantCheck = verifyTenantIntegrityAndAntiTamper(devRes.reply, ctoRes.reply, clientContext);
+  if (!tenantCheck.ok) {
+    console.error(`[SEGURANÇA BLOQUEADA INTERNA]: ${tenantCheck.internalReason}`);
+    throw new Error(tenantCheck.error);
+  }
+
   if (onProgress) onProgress(80, 'Código gerado e auditado contra hardcode e alucinações. Disparando Revisor de UX e Testador QA...');
 
   // 4. AUDITORIA CONCORRENTE: REVISOR & TESTADOR
@@ -2145,8 +2204,8 @@ PADRÃO:         Obsidian Glass Dark Mode | Tailwind CSS | Supabase PostgreSQL
 
     fs.writeFileSync(path.join(baseDir, 'audit', 'completion-evidence.json'), JSON.stringify(completionEvidence, null, 2), 'utf8');
 
-    if (!completionEvidence.passed) {
-      throw new Error(`[ANTI-FAKE DONE REPROVADO]: A tarefa foi declarada concluída pela IA, mas falhou na Contra-Auditoria de Evidência Real (Score: ${completionEvidence.score}/100). Motivos: ${completionEvidence.issues.map(i => i.message).join(' | ')}`);
+    if (!completionEvidence.passed || completionEvidence.score < 100) {
+      throw new Error(`[BUILD BLOQUEADO]: O build não pode ser gerado porque há funcionalidades pendentes (Grau de conclusão: ${completionEvidence.score}%). Todas as funções da lista devem estar 100% comprovadas antes de subir a build. Motivos: ${completionEvidence.issues.map(i => i.message).join(' | ')}`);
     }
 
     savedFiles = {
@@ -2401,6 +2460,7 @@ module.exports = {
   auditZeroHardcode,
   auditZeroHallucination,
   auditTaskCompletionEvidence,
+  verifyTenantIntegrityAndAntiTamper,
   generateAbPreviews,
   scrapeDualSources,
   resolveDynamicRoleModel,
