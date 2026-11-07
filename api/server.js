@@ -27,6 +27,7 @@ const MemoryManager = require('../core/memory-manager');
 const loadSkills = require('../core/load-skills');
 const orchestrator = require('../core/orchestrator');
 const {
+  runPentagonSwarmPipeline,
   speculativeRace,
   runSequentialPipeline,
   runContinuousPipeline,
@@ -153,6 +154,7 @@ const server = http.createServer(async (req, res) => {
       data: [
         { id: 'diffai-pro', object: 'model', created: Date.now(), owned_by: 'diffai' },
         { id: 'diffai-pipeline', object: 'model', created: Date.now(), owned_by: 'diffai' },
+        { id: 'diffai-pentagon', object: 'model', created: Date.now(), owned_by: 'diffai' },
         { id: 'diffai-verify', object: 'model', created: Date.now(), owned_by: 'diffai' },
         { id: 'diffai-racing', object: 'model', created: Date.now(), owned_by: 'diffai' },
         { id: 'diffai-consensus', object: 'model', created: Date.now(), owned_by: 'diffai' },
@@ -162,6 +164,133 @@ const server = http.createServer(async (req, res) => {
         { id: 'gemini-3.1-flash', object: 'model', created: Date.now(), owned_by: 'google' }
       ]
     });
+    return;
+  }
+
+
+  // 🏛️ Pentagon Swarm Dynamic Roster & Live Health Inspection Endpoint
+  if (req.method === 'GET' && (pathname === '/v1/pentagon-swarm/roster' || pathname === '/api/pentagon-swarm/roster')) {
+    if (!verifyAuth(req)) {
+      sendJson(res, 401, { error: { message: 'Chave de API DiffAI inválida ou ausente.', type: 'invalid_request_error' } });
+      return;
+    }
+    const roster = orchestrator.resolveFullSwarmRoster();
+    const health = orchestrator.getModelHealthReport();
+    sendJson(res, 200, {
+      ok: true,
+      timestamp: new Date().toISOString(),
+      orchestrator: 'DiffAI EWMA Dynamic Dispatcher v3.2 (Zero Hardcode)',
+      roster,
+      modelHealth: health
+    });
+    return;
+  }
+
+  // 🎨 Gerador de Previews A/B de Layouts & Estilos de Concorrentes
+  if (req.method === 'POST' && (pathname === '/v1/pentagon-swarm/preview-ab' || pathname === '/api/pentagon-swarm/preview-ab')) {
+    if (!verifyAuth(req)) {
+      sendJson(res, 401, { error: { message: 'Chave de API DiffAI inválida ou ausente.', type: 'invalid_request_error' } });
+      return;
+    }
+    try {
+      const body = await readBody(req);
+      const niche = body.niche || 'Serviços';
+      const previews = await orchestrator.generateAbPreviews(niche, body.clientContext || {}, body);
+      if (body.saveToDisk && body.slug) {
+        const fs = require('fs');
+        const path = require('path');
+        const targetDir = path.resolve(process.cwd(), 'factory', 'sites', body.slug, 'audit');
+        fs.mkdirSync(targetDir, { recursive: true });
+        fs.writeFileSync(path.join(targetDir, 'ab-preview-options.json'), JSON.stringify({
+          niche,
+          generatedAt: new Date().toISOString(),
+          scrapedCompetitors: previews.scrapedCompetitors || [],
+          benchmarkRanking: previews.benchmarkRanking || {},
+          options: previews.options || { optionA: previews.optionA, optionB: previews.optionB }
+        }, null, 2), 'utf8');
+      }
+      sendJson(res, 200, {
+        ok: true,
+        niche,
+        scrapedCompetitors: previews.scrapedCompetitors,
+        benchmarkRanking: previews.benchmarkRanking,
+        options: previews.options || { optionA: previews.optionA, optionB: previews.optionB },
+        previews
+      });
+    } catch (err) {
+      sendJson(res, 500, { error: { message: err.message } });
+    }
+    return;
+  }
+
+  // 📊 Matriz de Funcionalidades Híbrida (Sites Concorrentes + GitHub)
+  if (req.method === 'POST' && (pathname === '/v1/pentagon-swarm/features' || pathname === '/api/pentagon-swarm/features')) {
+    if (!verifyAuth(req)) {
+      sendJson(res, 401, { error: { message: 'Chave de API DiffAI inválida ou ausente.', type: 'invalid_request_error' } });
+      return;
+    }
+    try {
+      const body = await readBody(req);
+      const matrix = await orchestrator.scrapeDualSources(body.niche || 'Serviços', body.clientContext || {});
+      sendJson(res, 200, { ok: true, niche: body.niche, totalFeatures: matrix.length, featureMatrix: matrix });
+    } catch (err) {
+      sendJson(res, 500, { error: { message: err.message } });
+    }
+    return;
+  }
+
+  // 🏛️ Pentagon Swarm 24/7 Site Factory Pipeline Endpoint
+  if (req.method === 'POST' && (pathname === '/v1/pentagon-swarm' || pathname === '/api/pentagon-swarm')) {
+    if (!verifyAuth(req)) {
+      sendJson(res, 401, { error: { message: 'Chave de API DiffAI inválida ou ausente.', type: 'invalid_request_error' } });
+      return;
+    }
+    try {
+      const body = await readBody(req);
+      const niche = body.niche || body.prompt || 'Clínica & Serviços';
+      const clientContext = body.clientContext || {};
+      const isStream = Boolean(body.stream);
+      const saveToDisk = body.saveToDisk === true;
+
+      if (isStream) {
+        res.writeHead(200, {
+          'Content-Type': 'text/event-stream; charset=utf-8',
+          'Cache-Control': 'no-cache, no-transform',
+          'Connection': 'keep-alive',
+          'Access-Control-Allow-Origin': '*'
+        });
+
+        const sendEvent = (event, data) => {
+          res.write(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`);
+        };
+
+        const result = await runPentagonSwarmPipeline({
+          niche,
+          clientContext,
+          saveToDisk,
+          callbacks: {
+            onProgress: (percent, msg) => sendEvent('progress', { percent, message: msg }),
+            onStageStart: (stage) => sendEvent('stage_start', { stage }),
+            onRosterElected: (roster) => sendEvent('roster_elected', roster),
+            onCeoToken: (tok) => sendEvent('ceo_token', { token: tok }),
+            onCtoToken: (tok) => sendEvent('cto_token', { token: tok }),
+            onProgrammerToken: (tok) => sendEvent('dev_token', { token: tok }),
+            onReviewerToken: (tok) => sendEvent('rev_token', { token: tok }),
+            onTesterToken: (tok) => sendEvent('qa_token', { token: tok })
+          }
+        });
+
+        sendEvent('complete', result);
+        res.write('data: [DONE]\n\n');
+        res.end();
+      } else {
+        const result = await runPentagonSwarmPipeline({ niche, clientContext, saveToDisk });
+        sendJson(res, 200, result);
+      }
+    } catch (err) {
+      console.error('[DiffAI Pentagon Swarm Error]', err);
+      sendJson(res, 500, { error: { message: err.message || 'Erro no pipeline Pentagon Swarm.' } });
+    }
     return;
   }
 
@@ -217,7 +346,7 @@ const server = http.createServer(async (req, res) => {
       const isStream = Boolean(body.stream);
       const streamProto = (req.headers['x-stream-protocol'] || (req.headers['accept'] === 'text/plain' ? 'raw' : 'openai')).toLowerCase();
       let replyText = '';
-      const mode = body.mode || (body.model === 'diffai-consensus' ? 'consensus' : (body.model === 'diffai-verify' ? 'verify' : (body.model === 'diffai-pipeline' ? 'pipeline' : (body.model === 'diffai-racing' ? 'race' : 'fast'))));
+      const mode = body.mode || (body.model === 'diffai-pentagon' ? 'pentagon' : (body.model === 'diffai-consensus' ? 'consensus' : (body.model === 'diffai-verify' ? 'verify' : (body.model === 'diffai-pipeline' ? 'pipeline' : (body.model === 'diffai-racing' ? 'race' : 'fast')))));
 
       // Inicia Stream de acordo com o protocolo solicitado
       if (isStream) {
@@ -265,7 +394,20 @@ const server = http.createServer(async (req, res) => {
         res.end();
       };
 
-      if (mode === 'pipeline') {
+      if (mode === 'pentagon') {
+        const pRes = await runPentagonSwarmPipeline({
+          niche: userPrompt,
+          callbacks: {
+            onProgrammerToken: (tok) => { if (isStream) sendChunk(tok); }
+          }
+        });
+        if (isStream) {
+          finishStream();
+          return;
+        } else {
+          replyText = pRes.code;
+        }
+      } else if (mode === 'pipeline') {
         // Modo Esteira Contínua: Produtor (Groq) e Consumidor (Claude) simultâneos
         if (isStream) {
           await runContinuousPipeline({
