@@ -1217,35 +1217,51 @@ function auditZeroHardcode(code, context = {}) {
 }
 
 /**
- * ⚖️ TRIBUNAL ANTI-ALUCINAÇÃO DO PENTAGON SWARM (GROUND TRUTH ARBITER)
- * Audita o código gerado contra 5 categorias de alucinações críticas de IA:
+ * ⚖️ TRIBUNAL ANTI-ALUCINAÇÃO DO PENTAGON SWARM (GROUND TRUTH ARBITER & CSP GUARD)
+ * Audita o código gerado contra 6 categorias de alucinações críticas de IA:
  * 1. ALUCINAÇÃO DE FUNÇÃO FANTASMA (handlers HTML sem implementação no script)
  * 2. ALUCINAÇÃO DE BANCO DE DADOS (tabelas chamadas no frontend que não existem no DDL do CTO)
- * 3. ALUCINAÇÃO DE CDNs & DEPENDÊNCIAS (URLs inventadas ou suspeitas)
- * 4. ALUCINAÇÃO DE SINTAXE JAVASCRIPT (Script que falharia ao executar no browser)
- * 5. ALUCINAÇÃO DE PROPRIEDADES FANTASMAS DO CONTRATO
+ * 3. ALUCINAÇÃO DE VIOLAÇÃO CSP (scripts ou estilos que violam script-src/style-src de _headers)
+ * 4. ALUCINAÇÃO DE VULNERABILIDADE NAKED HTML (dependência 100% de CDN sem CSS fallback inline ou local)
+ * 5. ALUCINAÇÃO DE SINTAXE JAVASCRIPT (Script que falharia ao executar no browser)
+ * 6. VIOLAÇÃO DE DESTINO CORE (tentativa de gerar código sobrescrevendo módulos de produção pré-existentes)
  */
 function auditZeroHallucination(code, options = {}) {
   const issues = [];
   const ddlSql = options.ddlSql || '';
   const niche = options.niche || '';
+  const targetSlug = (options.targetSlug || options.slug || '').toLowerCase();
+  const targetPath = (options.targetPath || '').toLowerCase();
 
   if (!code || typeof code !== 'string') {
-    return { passed: false, score: 0, issues: ['Código inexistente para auditoria.'] };
+    return { passed: false, score: 0, issues: [{ severity: 'BLOCKER', category: 'CODIGO_VAZIO', message: 'Código inexistente para auditoria.' }] };
   }
 
   // 1. Verificação de Funções Fantasmas em Handlers HTML
-  const handlerMatches = code.matchAll(/on[a-z]+\s*=\s*["']\s*([a-zA-Z0-9_$]+)\s*\(/gi);
+  const handlerMatches = code.matchAll(/\son[a-z]+\s*=\s*["']([^"']+)["']/gi);
+  const nativeWhitelisted = new Set([
+    'alert', 'confirm', 'prompt', 'open', 'close', 'print', 'focus', 'blur',
+    'console', 'window', 'document', 'location', 'event', 'setTimeout', 'setInterval',
+    'clearTimeout', 'clearInterval', 'OmniApp', 'RouteGuard', 'AuthAdapter', 'navigator',
+    'if', 'for', 'while', 'switch', 'return', 'try', 'catch'
+  ]);
+
   for (const m of handlerMatches) {
-    const fnName = m[1];
-    if (['alert', 'confirm', 'prompt', 'open', 'close', 'print', 'focus', 'blur'].includes(fnName)) continue;
-    const fnDeclared = new RegExp(`(function\\s+${fnName}\\b|const\\s+${fnName}\\s*=|let\\s+${fnName}\\s*=|var\\s+${fnName}\\s*=|window\\.${fnName}\\s*=)`).test(code);
-    if (!fnDeclared) {
-      issues.push({
-        severity: 'HIGH',
-        category: 'ALUCINACAO_FUNCAO_FANTASMA',
-        message: `Handler HTML invoca a função "${fnName}()", mas ela NUNCA foi declarada no <script>. Função fantasma alucinada.`
-      });
+    const expr = m[1].trim();
+    const fnCallMatch = expr.match(/^([a-zA-Z0-9_$]+(?:\.[a-zA-Z0-9_$]+)*)\s*\(/);
+    if (fnCallMatch) {
+      const fullCall = fnCallMatch[1];
+      const rootObject = fullCall.split('.')[0];
+      if (nativeWhitelisted.has(rootObject)) continue;
+
+      const fnDeclared = new RegExp(`(function\\s+${rootObject}\\b|const\\s+${rootObject}\\s*=|let\\s+${rootObject}\\s*=|var\\s+${rootObject}\\s*=|window\\.${rootObject}\\s*=)`).test(code);
+      if (!fnDeclared) {
+        issues.push({
+          severity: 'HIGH',
+          category: 'ALUCINACAO_FUNCAO_FANTASMA',
+          message: `Handler HTML invoca a função "${fullCall}()", mas "${rootObject}" NUNCA foi declarado no <script>. Função fantasma alucinada.`
+        });
+      }
     }
   }
 
@@ -1265,24 +1281,120 @@ function auditZeroHallucination(code, options = {}) {
     }
   }
 
-  // 3. Verificação de CDNs Inventadas / Falsas
-  const scriptSrcMatches = code.matchAll(/<script[^>]+src=["']([^"']+)["']/gi);
-  const trustedCdns = ['cdn.tailwindcss.com', 'cdnjs.cloudflare.com', 'kit.fontawesome.com', 'cdn.jsdelivr.net', 'unpkg.com', 'supabase.co'];
-  for (const m of scriptSrcMatches) {
-    const url = m[1];
-    if (url.startsWith('http://') || url.startsWith('https://')) {
-      const isTrusted = trustedCdns.some(cdn => url.includes(cdn));
-      if (!isTrusted) {
-        issues.push({
-          severity: 'HIGH',
-          category: 'ALUCINACAO_CDN_SUSPEITA',
-          message: `Script externo não homologado ou potencialmente alucinado: "${url}". Use apenas CDNs oficiais (Tailwind, FontAwesome, Cloudflare).`
-        });
-      }
+  // 3. Auditoria Real de Content-Security-Policy (CSP) contra _headers
+  const fs = require('fs');
+  const candidateHeaderPaths = [
+    options.headersPath,
+    path.resolve(process.cwd(), '_headers'),
+    path.resolve(__dirname, '..', '..', '_headers'),
+    path.resolve(__dirname, '..', '_headers'),
+    'C:/Users/cliente/.gemini/antigravity/worktrees/Sistema_Distribuipro/finalizar_ultimas_tarefas/_headers'
+  ].filter(Boolean);
+
+  let cspScriptSrc = [];
+  let cspStyleSrc = [];
+
+  for (const hp of candidateHeaderPaths) {
+    if (fs.existsSync(hp)) {
+      try {
+        const headersContent = fs.readFileSync(hp, 'utf8');
+        const cspMatch = headersContent.match(/Content-Security-Policy:\s*([^\r\n]+)/i);
+        if (cspMatch) {
+          const cspFull = cspMatch[1];
+          const scriptMatch = cspFull.match(/script-src\s+([^;]+)/i);
+          const styleMatch = cspFull.match(/style-src\s+([^;]+)/i);
+          if (scriptMatch) cspScriptSrc = scriptMatch[1].split(/\s+/).filter(Boolean);
+          if (styleMatch) cspStyleSrc = styleMatch[1].split(/\s+/).filter(Boolean);
+          break;
+        }
+      } catch (_) {}
     }
   }
 
-  // 4. Verificação de Sintaxe JavaScript Básica (Blocos <script>)
+  // Validar scripts externos contra CSP
+  const scriptSrcMatches = [...code.matchAll(/<script[^>]+src=["'](https?:\/\/[^"']+)["']/gi)];
+  for (const sm of scriptSrcMatches) {
+    const url = sm[1];
+    try {
+      const parsed = new URL(url);
+      if (cspScriptSrc.length > 0) {
+        const isAllowed = cspScriptSrc.some(allowed => {
+          if (allowed === "'self'" || allowed === "'unsafe-inline'" || allowed === "'unsafe-eval'") return false;
+          if (allowed.startsWith('https://')) return url.startsWith(allowed) || parsed.hostname === new URL(allowed).hostname;
+          return false;
+        });
+        if (!isAllowed) {
+          issues.push({
+            severity: 'CRITICAL',
+            category: 'ALUCINACAO_VIOLACAO_CSP',
+            message: `Script externo "${url}" será bloqueado pelo CSP em produção (_headers script-src). Violação inegociável.`
+          });
+        }
+      } else {
+        const trustedCdns = ['cdn.tailwindcss.com', 'cdnjs.cloudflare.com', 'kit.fontawesome.com', 'cdn.jsdelivr.net', 'unpkg.com', 'supabase.co'];
+        if (!trustedCdns.some(cdn => url.includes(cdn))) {
+          issues.push({
+            severity: 'HIGH',
+            category: 'ALUCINACAO_CDN_SUSPEITA',
+            message: `Script externo não homologado ou potencialmente alucinado: "${url}".`
+          });
+        }
+      }
+    } catch (_) {}
+  }
+
+  // Validar stylesheets externas contra CSP
+  const styleHrefMatches = [
+    ...code.matchAll(/<link[^>]+rel=["']stylesheet["'][^>]+href=["'](https?:\/\/[^"']+)["']/gi),
+    ...code.matchAll(/<link[^>]+href=["'](https?:\/\/[^"']+)["'][^>]+rel=["']stylesheet["']/gi)
+  ];
+  for (const hm of styleHrefMatches) {
+    const url = hm[1];
+    try {
+      const parsed = new URL(url);
+      if (cspStyleSrc.length > 0) {
+        const isAllowed = cspStyleSrc.some(allowed => {
+          if (allowed === "'self'" || allowed === "'unsafe-inline'") return false;
+          if (allowed.startsWith('https://')) return url.startsWith(allowed) || parsed.hostname === new URL(allowed).hostname;
+          return false;
+        });
+        if (!isAllowed) {
+          issues.push({
+            severity: 'CRITICAL',
+            category: 'ALUCINACAO_VIOLACAO_CSP',
+            message: `Stylesheet externa "${url}" será bloqueada pelo CSP em produção (_headers style-src). Violação inegociável.`
+          });
+        }
+      }
+    } catch (_) {}
+  }
+
+  // 4. Verificação de Vulnerabilidade "Zero Naked HTML"
+  const usesTailwindCdn = code.includes('cdn.tailwindcss.com');
+  if (usesTailwindCdn) {
+    const hasInlineCssReset = /<style[^>]*>[\s\S]*?(body|html|#[a-zA-Z0-9_-]+|\.[a-zA-Z0-9_-]+)[\s\S]*?<\/style>/i.test(code);
+    const hasLocalStylesheet = /<link[^>]+rel=["']stylesheet["'][^>]+href=["'](?!\s*https?:\/\/)[^"']+["']/i.test(code) ||
+                               /<link[^>]+href=["'](?!\s*https?:\/\/)[^"']+["'][^>]+rel=["']stylesheet["']/i.test(code);
+    if (!hasInlineCssReset && !hasLocalStylesheet) {
+      issues.push({
+        severity: 'HIGH',
+        category: 'VULNERABILIDADE_NAKED_HTML',
+        message: 'O layout depende exclusivamente do script compilador runtime Tailwind CDN sem CSS fallback inline no <style> nem folha local linkada. Se o CDN falhar ou for bloqueado por CSP, a interface renderizará como HTML pelado/desformatado.'
+      });
+    }
+  }
+
+  // 5. Verificação de Preservação de Módulos Core
+  const protectedModules = ['ai', 'admin', 'erp', 'portal', 'shared', 'config', 'database'];
+  if (protectedModules.includes(targetSlug) || protectedModules.some(p => targetPath.includes(`/${p}/`) || targetPath.includes(`\\${p}\\`))) {
+    issues.push({
+      severity: 'CRITICAL',
+      category: 'VIOLACAO_MODULO_CORE',
+      message: `Tentativa de gerar ou sobrescrever módulo protegido de produção (${targetSlug || targetPath}). Fábricas devem operar exclusivamente em factory/sites/<slug>/.`
+    });
+  }
+
+  // 6. Verificação de Sintaxe JavaScript Básica (Blocos <script>)
   const scriptBlocks = code.matchAll(/<script(?![^>]*src)[^>]*>([\s\S]*?)<\/script>/gi);
   const vm = require('vm');
   for (const block of scriptBlocks) {
@@ -1302,7 +1414,7 @@ function auditZeroHallucination(code, options = {}) {
     }
   }
 
-  // 5. Cálculo do Score Anti-Alucinação (0 a 100)
+  // 7. Cálculo do Score Anti-Alucinação (0 a 100)
   let score = 100;
   issues.forEach(iss => {
     if (iss.severity === 'CRITICAL') score -= 35;
@@ -1860,6 +1972,12 @@ async function runPentagonSwarmPipeline(options = {}) {
     callbacks = {}
   } = options;
 
+  const slug = (clientContext.brandName || niche)
+    .toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '') || 'sistema-white-label';
+
   const {
     onStageStart,
     onRosterElected,
@@ -1964,13 +2082,17 @@ ${ctoRes.reply.slice(0, 1500)}
 SUA MISSÃO OBRIGATÓRIA:
 Gere a aplicação web 100% COMPLETA, INTERATIVA e EXECUTÁVEL dentro de um único bloco \`\`\`html.
 REQUISITOS INEGOCIÁVEIS:
-1. Design System Obsidian Glass Dark Mode (Tailwind CSS CDN + FontAwesome CDN).
+1. Design System Obsidian Glass Dark Mode com BLINDAGEM ZERO NAKED HTML:
+   - Todo layout DEVE conter no <head> um bloco <style> inicial com CSS estrutural crítico (background #07090e / #0f172a, cores de texto, fontes e reset básico) ou link para folha de estilos local.
+   - NUNCA dependa exclusivamente de scripts compiladores CDN (como Tailwind Play CDN) sem CSS fallback inline no <style>. Se o script falhar ou for bloqueado por Content-Security-Policy (CSP), a página JAMAIS pode quebrar ou renderizar como HTML pelado.
+   - Scripts e stylesheets externos DEVEM respeitar rigorosamente as diretivas CSP do _headers.
 2. window.SITE_CONFIG no topo do script com gaveta de personalização (drawer) que altera nome, logo e cores em 30 segundos.
 3. Dual-Portal: Alternância via abas/botão entre "Portal do Usuário" e "Painel Administrativo" (com gestão de usuários, financeiro e KPIs).
 4. Botões caixa ON/OFF interativos, KPIs reativos, gráficos vetoriais em SVG nativo de 0ms e modais funcionais.
 5. Integração nativa simulada com Supabase (localStorage fallback offline instantâneo).
 6. 100% Responsivo (Mobile 375px até 4K PC).
 7. SEM CÓDIGO INCOMPLETO. Não use reticências (...) ou placeholders vazios.
+8. PRESERVAÇÃO DE SISTEMAS CORE: NUNCA gere código para sobrescrever módulos raiz preexistentes do ecossistema (ai/index.html, admin/, erp/, portal/). A fábrica opera exclusivamente em factory/sites/<slug>/.
 
 Gere apenas o bloco de código HTML completo agora:`;
 
@@ -1985,19 +2107,22 @@ Gere apenas o bloco de código HTML completo agora:`;
   if (devRes.usedModel) roster.programmer.model = devRes.usedModel;
   if (onProgrammerComplete) onProgrammerComplete(devRes.reply);
 
-  // 3. AUDITORIA ANTI-HARDCODE & TRIBUNAL ANTI-ALUCINAÇÃO DO CTO GATEKEEPER
+  // 3. AUDITORIA ANTI-HARDCODE & TRIBUNAL ANTI-ALUCINAÇÃO DO CTO GATEKEEPER COM VETO ATIVO
   const hardcodeAudit = auditZeroHardcode(devRes.reply, clientContext);
   if (!hardcodeAudit.passed) {
-    console.warn(`[CTO Gatekeeper Alerta]: Código gerado contém débitos técnicos de hardcoding (Score: ${hardcodeAudit.score}/100).`, hardcodeAudit.issues);
+    const errorDetails = hardcodeAudit.issues.map(i => `[${i.severity}] ${i.rule}: ${i.message}`).join(' | ');
+    throw new Error(`[CTO GATEKEEPER VETO]: Código rejeitado por débitos de hardcoding (Score: ${hardcodeAudit.score}/100). Motivos: ${errorDetails}`);
   }
 
   const hallucinationAudit = auditZeroHallucination(devRes.reply, {
     ddlSql: ctoRes.reply,
     niche,
-    clientContext
+    clientContext,
+    targetSlug: slug
   });
   if (!hallucinationAudit.passed) {
-    console.warn(`[Tribunal Anti-Alucinação Alerta]: Código gerado contém potenciais alucinações (Score: ${hallucinationAudit.score}/100).`, hallucinationAudit.issues);
+    const errorDetails = hallucinationAudit.issues.map(i => `[${i.severity}] ${i.category}: ${i.message}`).join(' | ');
+    throw new Error(`[TRIBUNAL ANTI-ALUCINAÇÃO VETO]: Código rejeitado por alucinações críticas (Score: ${hallucinationAudit.score}/100). Motivos: ${errorDetails}`);
   }
 
   // 3.1 BLINDAGEM ANTI-BYPASS DE TENANT & ADULTERAÇÃO (ANTI-TAMPER SHIELD)
@@ -2052,12 +2177,6 @@ Emita o Selo de Homologação QA com checklist pontual.`;
   const totalDuration = Date.now() - t0;
 
   // 4. PROTOCOLO DE ASSINATURA DINÂMICA (ZERO HARDCODE) & SALVAMENTO CANÔNICO
-  const slug = (clientContext.brandName || niche)
-    .toLowerCase()
-    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '') || 'sistema-white-label';
-
   const signatureHeader = `<!--
 ============================================================================
 OZPRO PENTAGON SWARM 24/7 — CÓDIGO HOMOLOGADO
@@ -2099,6 +2218,11 @@ PADRÃO:         Obsidian Glass Dark Mode | Tailwind CSS | Supabase PostgreSQL
     const normalizedTarget = path.normalize(baseDir);
     if (!normalizedTarget.includes(path.join('factory', 'sites'))) {
       throw new Error(`[CTO GATEKEEPER REPROVADO]: Tentativa de salvar fora da pasta canônica (factory/sites/${slug}). Destino bloqueado para prevenir poluição de diretórios.`);
+    }
+
+    const protectedRoots = ['ai', 'admin', 'erp', 'portal', 'shared', 'config', 'database'];
+    if (protectedRoots.some(root => normalizedTarget.endsWith(path.sep + root) || normalizedTarget.includes(path.sep + root + path.sep))) {
+      throw new Error(`[CTO GATEKEEPER REPROVADO]: Tentativa de sobrescrever módulo protegido de produção (${normalizedTarget}). Destino bloqueado.`);
     }
 
     fs.mkdirSync(path.join(baseDir, 'config'), { recursive: true });
