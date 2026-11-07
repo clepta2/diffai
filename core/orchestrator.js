@@ -42,7 +42,7 @@ const httpAgent = new http.Agent({
 });
 
 const MODEL_ALIASES = {
-  'r1': 'ollama/deepseek-v4.1-flash:cloud',
+  'r1': 'kr/deepseek-3.2',
   'reasoner': 'ag/claude-opus-4-6-thinking',
   'claude': 'ag/claude-sonnet-4-6',
   'sonnet': 'ag/claude-sonnet-4-6',
@@ -51,7 +51,17 @@ const MODEL_ALIASES = {
   'flash': 'gc/gemini-2.5-flash',
   'gemini': 'gc/gemini-2.5-flash',
   '9router': '9router',
-  'auto': 'ag/claude-sonnet-4-6'
+  'auto': 'ag/claude-sonnet-4-6',
+  'kilo': 'kr/deepseek-3.2',
+  'kilo-r1': 'kr/deepseek-3.2',
+  'kilo-llama': 'groq/openai/gpt-oss-120b',
+  'kilo-coder': 'kr/qwen3-coder-next',
+  'kiro': 'kr/claude-sonnet-4.5',
+  'kiro-claude': 'kr/claude-sonnet-4.5',
+  'kiro-haiku': 'kr/claude-haiku-4.5',
+  'kiro-deepseek': 'kr/deepseek-3.2',
+  'kiro-coder': 'kr/qwen3-coder-next',
+  'qoder': 'qd/qfmodel'
 };
 
 // Protocolo A2A Ultra-Compacto (Zero Conversa Fiada)
@@ -158,7 +168,22 @@ function setInCache(key, value) {
  * Consulta Principal com Streaming SSE e Suporte a Auto-Skill
  */
 function streamQueryOmniRouter(modelInput, prompt, onToken, systemPrompt = '', options = {}) {
-  const modelId = MODEL_ALIASES[modelInput?.toLowerCase()] || modelInput || 'auto/best-free';
+  let modelId = MODEL_ALIASES[modelInput?.toLowerCase()] || modelInput || 'auto/best-free';
+
+  // Regra crítica permanente: se kc/* for solicitado mas Kilo Code estiver com saldo zero, redirecionar para rota 100% free equivalente
+  if (typeof modelId === 'string' && modelId.startsWith('kc/')) {
+    if (modelId.includes('deepseek') || modelId.includes('r1') || modelId.includes('chat') || modelId.includes('reasoner')) {
+      modelId = 'kr/deepseek-3.2';
+    } else if (modelId.includes('claude') || modelId.includes('sonnet') || modelId.includes('opus')) {
+      modelId = 'kr/claude-sonnet-4.5';
+    } else if (modelId.includes('coder') || modelId.includes('qwen')) {
+      modelId = 'kr/qwen3-coder-next';
+    } else if (modelId.includes('gemini') || modelId.includes('flash')) {
+      modelId = 'gemini/gemini-2.5-flash';
+    } else {
+      modelId = 'ag/claude-sonnet-4-6';
+    }
+  }
   const { a2a = false, abortSignal = null, bypassCache = false, autoSkill = false } = options;
 
   let finalSystem = systemPrompt || '';

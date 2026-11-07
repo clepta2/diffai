@@ -323,13 +323,26 @@ const server = http.createServer(async (req, res) => {
       } else {
         // Modo Padrão: Prompt Enriquecido com Memória e Skill
         const enrichedPrompt = `${skillInjection ? `[Skills Ativas]\n${skillInjection}\n\n` : ''}${tenantCtx.textBlock}\n\nPergunta do Lojista: ${userPrompt}`;
-        if (isStream) {
-          await speculativeRace(enrichedPrompt, ['ag/claude-sonnet-4-6', 'ag/gpt-oss-120b-medium'], sendChunk);
-          finishStream();
-          return;
+        const explicitModel = body.model && !body.model.startsWith('diffai-') && body.model !== 'auto' && body.model !== 'fast' ? body.model : null;
+
+        if (explicitModel) {
+          if (isStream) {
+            await orchestrator.streamQueryOmniRouter(explicitModel, enrichedPrompt, sendChunk, 'Você é o Hermes AI da OZPro.');
+            finishStream();
+            return;
+          } else {
+            const modelRes = await orchestrator.streamQueryOmniRouter(explicitModel, enrichedPrompt, () => {}, 'Você é o Hermes AI da OZPro.');
+            replyText = modelRes.reply || modelRes.content || 'Resposta gerada com sucesso.';
+          }
         } else {
-          const defaultRace = await speculativeRace(enrichedPrompt, ['ag/claude-sonnet-4-6', 'ag/gpt-oss-120b-medium']);
-          replyText = defaultRace.reply || defaultRace.content || 'Resposta gerada com sucesso.';
+          if (isStream) {
+            await speculativeRace(enrichedPrompt, ['ag/claude-sonnet-4-6', 'ag/gpt-oss-120b-medium'], sendChunk);
+            finishStream();
+            return;
+          } else {
+            const defaultRace = await speculativeRace(enrichedPrompt, ['ag/claude-sonnet-4-6', 'ag/gpt-oss-120b-medium']);
+            replyText = defaultRace.reply || defaultRace.content || 'Resposta gerada com sucesso.';
+          }
         }
       }
 
