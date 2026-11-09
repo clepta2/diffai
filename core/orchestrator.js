@@ -17,6 +17,7 @@
 const http = require('http');
 const crypto = require('crypto');
 const path = require('path');
+const fs = require('fs');
 
 // Integração opcional com o novo Lazy Loader de Skills
 let loadSkills = null;
@@ -28,9 +29,45 @@ try {
   } catch (_) {}
 }
 
-const HOST = process.env.OMNIROUTER_HOST || '100.98.113.39';
-const PORT = parseInt(process.env.OMNIROUTER_PORT || '20128', 10);
-const MASTER_KEY = process.env.OMNIROUTER_API_KEY || process.env.DIFFAI_API_KEY || 'sk-ed50645fd257c652-hrayzt-ae2a2594';
+// ============================================================================
+// MALHA DE ALTA DISPONIBILIDADE MULTI-GATEWAY (VM + LOCAL + DIFFAI CLUSTER)
+// ============================================================================
+const GATEWAYS = [
+  {
+    name: 'vm-tailscale',
+    host: process.env.OMNIROUTER_VM_HOST || process.env.OMNIROUTER_HOST || '100.98.113.39',
+    port: parseInt(process.env.OMNIROUTER_VM_PORT || process.env.OMNIROUTER_PORT || '20128', 10),
+    key: process.env.OMNIROUTER_VM_KEY || process.env.OMNIROUTER_API_KEY || 'sk-ed50645fd257c652-hrayzt-ae2a2594',
+    preferredPrefixes: ['ag/', 'kr/', 'qd/', 'groq/', 'gemini/', 'google/', 'meta/']
+  },
+  {
+    name: 'local-omnirouter',
+    host: process.env.OMNIROUTER_LOCAL_HOST || '127.0.0.1',
+    port: parseInt(process.env.OMNIROUTER_LOCAL_PORT || '20128', 10),
+    key: process.env.OMNIROUTER_LOCAL_KEY || 'sk-4bdea699391ac60f-2e1189-a0d0dae5',
+    preferredPrefixes: ['grok-cli/', 'claude-web/', 'deepseek-web/']
+  },
+  {
+    name: 'local-diffai-gateway',
+    host: '127.0.0.1',
+    port: parseInt(process.env.PORT || '3030', 10),
+    key: process.env.DIFFAI_API_KEY || 'sk-diffai-master-key',
+    preferredPrefixes: ['diffai/']
+  }
+];
+
+function selectGatewaysForModel(modelId) {
+  const matching = [];
+  const others = [];
+  for (const gw of GATEWAYS) {
+    if (gw.preferredPrefixes && gw.preferredPrefixes.some(p => modelId.startsWith(p))) {
+      matching.push(gw);
+    } else {
+      others.push(gw);
+    }
+  }
+  return [...matching, ...others];
+}
 
 // Pool de Conexões Persistentes Keep-Alive com TCP NoDelay
 const httpAgent = new http.Agent({
@@ -61,7 +98,11 @@ const MODEL_ALIASES = {
   'kiro-haiku': 'kr/claude-haiku-4.5',
   'kiro-deepseek': 'kr/deepseek-3.2',
   'kiro-coder': 'kr/qwen3-coder-next',
-  'qoder': 'qd/qfmodel'
+  'qoder': 'qd/qfmodel',
+  'grok': 'grok-cli/grok-4.7-medium',
+  'grok-large': 'grok-cli/grok-4.7',
+  'fast': 'groq/openai/gpt-oss-120b',
+  'speed': 'groq/openai/gpt-oss-120b'
 };
 
 // Protocolo A2A Ultra-Compacto (Zero Conversa Fiada)
@@ -167,7 +208,7 @@ function setInCache(key, value) {
 /**
  * Consulta Principal com Streaming SSE e Suporte a Auto-Skill
  */
-function streamQueryOmniRouter(modelInput, prompt, onToken, systemPrompt = '', options = {}) {
+async function streamQueryOmniRouter(modelInput, prompt, onToken, systemPrompt = '', options = {}) {
   let modelId = MODEL_ALIASES[modelInput?.toLowerCase()] || modelInput || 'auto/best-free';
 
   // Regra crítica permanente: se kc/* for solicitado mas Kilo Code estiver com saldo zero, redirecionar para rota 100% free equivalente
@@ -228,41 +269,64 @@ function streamQueryOmniRouter(modelInput, prompt, onToken, systemPrompt = '', o
     max_tokens: options.max_tokens || 8192
   });
 
+  const candidateGateways = selectGatewaysForModel(modelId);
+  let lastError = null;
+
+  for (const gw of candidateGateways) {
+    try {
+      const res = await dispatchToGateway(gw, modelId, postData, onToken, abortSignal);
+      if (res && res.ok) {
+        if (res.reply) setInCache(cacheKey, res.reply);
+        return res;
+      }
+    } catch (err) {
+      lastError = err;
+      // Gateway indisponível ou com erro: avança silenciosamente para o próximo gateway do mesh
+    }
+  }
+
+  throw lastError || new Error(`[DiffAI] Falha em todos os gateways do cluster para o modelo ${modelId}`);
+}
+
+function dispatchToGateway(gw, modelId, postData, onToken, abortSignal) {
   return new Promise((resolve, reject) => {
     const start = Date.now();
     let ttft = null;
     let fullText = '';
     let buffer = '';
+    let rawBody = '';
 
     const req = http.request({
-      hostname: HOST,
-      port: PORT,
+      hostname: gw.host,
+      port: gw.port,
       path: '/v1/chat/completions',
       method: 'POST',
       agent: httpAgent,
       signal: abortSignal,
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${MASTER_KEY}`,
+        'Authorization': `Bearer ${gw.key}`,
         'Content-Length': Buffer.byteLength(postData),
         'Connection': 'keep-alive'
       },
-      timeout: 120000
+      timeout: 90000
     }, (res) => {
       if (res.statusCode < 200 || res.statusCode >= 300) {
         let errData = '';
         res.on('data', c => errData += c);
         res.on('end', () => {
           recordModelMetric(modelId, 99999, false);
-          reject(new Error(`[HTTP ${res.statusCode}]: ${errData}`));
+          reject(new Error(`[Gateway ${gw.name} HTTP ${res.statusCode}]: ${errData}`));
         });
         return;
       }
 
       res.on('data', chunk => {
         if (!ttft) ttft = Date.now() - start;
-        req.setTimeout(60000); // Watchdog keep-alive: renova 60s a cada chunk recebido
-        buffer += chunk.toString('utf8');
+        req.setTimeout(60000); // Watchdog keep-alive
+        const str = chunk.toString('utf8');
+        rawBody += str;
+        buffer += str;
 
         let nlIdx;
         while ((nlIdx = buffer.indexOf('\n')) !== -1) {
@@ -313,12 +377,20 @@ function streamQueryOmniRouter(modelInput, prompt, onToken, systemPrompt = '', o
       });
 
       res.on('end', () => {
+        // Fallback robusto: se não recebeu chunks SSE, extrai da resposta JSON bruta
+        if (!fullText && rawBody) {
+          try {
+            const parsed = JSON.parse(rawBody.trim());
+            fullText = parsed?.choices?.[0]?.message?.content || parsed?.choices?.[0]?.text || '';
+            if (fullText && typeof onToken === 'function') onToken(fullText);
+          } catch (_) {}
+        }
         const totalDuration = Date.now() - start;
         recordModelMetric(modelId, totalDuration, true);
-        if (fullText) setInCache(cacheKey, fullText);
         resolve({
           ok: true,
           model: modelId,
+          gateway: gw.name,
           ttft: ttft || totalDuration,
           totalDuration,
           reply: fullText
@@ -330,7 +402,7 @@ function streamQueryOmniRouter(modelInput, prompt, onToken, systemPrompt = '', o
     req.on('timeout', () => {
       req.destroy();
       recordModelMetric(modelId, 99999, false);
-      reject(new Error('Timeout de streaming excedido.'));
+      reject(new Error(`Timeout de streaming no gateway ${gw.name}`));
     });
     req.on('error', (e) => {
       recordModelMetric(modelId, 99999, false);
@@ -958,7 +1030,7 @@ Escreva a solução em código completo, elegante e com tipagem estrita. Sem exp
 // ============================================================================
 
 const BASE_MODEL_LATENCIES = {
-  'groq/openai/gpt-oss-120b': 330,
+  'groq/openai/gpt-oss-120b': 153,
   'groq/llama-3.3-70b-versatile': 330,
   'ag/gpt-oss-120b-medium': 700,
   'gemini/gemini-3.5-flash-lite': 790,
@@ -968,43 +1040,57 @@ const BASE_MODEL_LATENCIES = {
   'kr/claude-sonnet-4.5': 1800,
   'qd/qfmodel': 2100,
   'kr/deepseek-3.2': 2500,
-  'kc/deepseek-r1:free': 3200
+  'kc/deepseek-r1:free': 3200,
+  'grok-cli/grok-4.7-medium': 3330,
+  'grok-cli/grok-4.7': 3860
 };
 
 const ROLE_CANDIDATES = {
   // CARGOS C-LEVEL (DIRETORIA ESTRATÉGICA)
   'ceo': [
+    'ag/claude-opus-4-6-thinking',
     'ag/claude-sonnet-4-6',
     'kr/claude-sonnet-4.5',
+    'grok-cli/grok-4.7-medium',
     'ag/gpt-oss-120b-medium',
-    'groq/openai/gpt-oss-120b',
-    'gc/gemini-2.5-flash'
+    'groq/openai/gpt-oss-120b'
   ],
   'cto': [
     'ag/claude-sonnet-4-6',
     'kr/claude-sonnet-4.5',
+    'grok-cli/grok-4.7-medium',
     'kr/deepseek-3.2',
     'ag/claude-opus-4-6-thinking',
     'kc/deepseek-r1:free'
   ],
   'programmer': [
+    'ag/claude-sonnet-4-6',
+    'grok-cli/grok-4.7-medium',
     'groq/openai/gpt-oss-120b',
     'ag/gpt-oss-120b-medium',
-    'ag/claude-sonnet-4-6',
     'qd/qfmodel',
     'gc/gemini-2.5-flash'
   ],
   'reviewer': [
     'ag/claude-sonnet-4-6',
+    'ag/gpt-oss-120b-medium',
+    'groq/openai/gpt-oss-120b',
     'kr/deepseek-3.2',
-    'kr/claude-sonnet-4.5',
-    'gc/gemini-2.5-flash'
+    'kr/claude-sonnet-4.5'
+  ],
+  'chaos_qa': [
+    'grok-cli/grok-4.7-medium',
+    'ag/claude-opus-4-6-thinking',
+    'kr/deepseek-3.2',
+    'ag/claude-sonnet-4-6',
+    'kc/deepseek-r1:free',
+    'groq/openai/gpt-oss-120b'
   ],
   'tester': [
-    'gemini/gemini-3.5-flash-lite',
-    'gc/gemini-2.5-flash',
+    'groq/openai/gpt-oss-120b',
     'ag/gpt-oss-120b-medium',
-    'groq/openai/gpt-oss-120b'
+    'gemini/gemini-3.5-flash-lite',
+    'gc/gemini-2.5-flash'
   ],
 
   // SUB-OPERÁRIOS / FUNCIONÁRIOS (DELEGAÇÃO DE MICRO-TAREFAS SUB-SEGUNDO)
@@ -1019,6 +1105,7 @@ const ROLE_CANDIDATES = {
     'gemini/gemini-3.5-flash-lite'
   ],
   'worker:copywriter': [
+    'grok-cli/grok-4.7-medium',
     'groq/openai/gpt-oss-120b',
     'ag/gpt-oss-120b-medium',
     'gc/gemini-2.5-flash'
@@ -1104,6 +1191,7 @@ function resolveFullSwarmRoster(options = {}) {
   const programmer = resolveDynamicRoleModel('programmer', options.devModel || options.programmerModel);
   const reviewer = resolveDynamicRoleModel('reviewer', options.revModel || options.reviewerModel);
   const tester = resolveDynamicRoleModel('tester', options.qaModel || options.testerModel);
+  const chaos_qa = resolveDynamicRoleModel('chaos_qa', options.chaosModel || options.chaosQaModel);
 
   const workers = {
     scraper: resolveDynamicRoleModel('worker:scraper', options.scraperModel),
@@ -1123,6 +1211,7 @@ function resolveFullSwarmRoster(options = {}) {
     programmer,
     reviewer,
     tester,
+    chaos_qa,
     workers,
     workersSummary,
     timestamp: new Date().toISOString()
@@ -1991,6 +2080,8 @@ async function runPentagonSwarmPipeline(options = {}) {
     onReviewerComplete,
     onTesterToken,
     onTesterComplete,
+    onChaosQaToken,
+    onChaosQaComplete,
     onProgress
   } = callbacks;
 
@@ -2367,11 +2458,14 @@ PADRÃO:         Obsidian Glass Dark Mode | Tailwind CSS | Supabase PostgreSQL
  */
 async function benchmarkCluster() {
   const testModels = [
-    { id: 'ddgw/gpt-5.4-mini', label: 'GPT-5 Mini' },
-    { id: 'antigravity/gemini-3.1-flash-lite', label: 'Gemini 3.1 Flash' },
-    { id: 'antigravity/claude-sonnet-4-6', label: 'Claude Sonnet 4.6' },
-    { id: 'deepseek-web/deepseek-chat', label: 'DeepSeek V3 Chat' },
-    { id: 'deepseek-web/deepseek-reasoner', label: 'DeepSeek R1 Reasoner' }
+    { id: 'groq/openai/gpt-oss-120b', label: 'Groq 120B (Sub-segundo)' },
+    { id: 'ag/gpt-oss-120b-medium', label: 'GPT-OSS 120B Medium' },
+    { id: 'ag/claude-sonnet-4-6', label: 'Claude Sonnet 4.6 (CTO)' },
+    { id: 'ag/claude-opus-4-6-thinking', label: 'Claude Opus Thinking (CEO)' },
+    { id: 'grok-cli/grok-4.7-medium', label: 'Grok 4.7 Medium (Chaos QA)' },
+    { id: 'kr/claude-sonnet-4.5', label: 'Kiro Claude Sonnet 4.5' },
+    { id: 'kr/deepseek-3.2', label: 'DeepSeek 3.2' },
+    { id: 'gemini/gemini-3.5-flash-lite', label: 'Gemini 3.5 Flash Lite' }
   ];
 
   console.log('⚡ Benchmark de Alta Frequência (Keep-Alive + TCP NoDelay)...\n');
@@ -2606,5 +2700,7 @@ module.exports = {
   getModelHealthReport,
   httpAgent,
   A2A_SYSTEM_HEADER,
-  MODEL_ALIASES
+  MODEL_ALIASES,
+  GATEWAYS,
+  selectGatewaysForModel
 };
